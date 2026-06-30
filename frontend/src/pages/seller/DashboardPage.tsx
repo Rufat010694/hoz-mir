@@ -30,13 +30,16 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl border border-gray-100 p-4">
           <h3 className="font-semibold text-gray-700 mb-3">Последние заказы</h3>
           <div className="space-y-2">
+            {data?.recent_orders.length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-4">Заказов пока нет</p>
+            )}
             {data?.recent_orders.map((o) => (
-              <div key={o.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-gray-800">#{o.order_number ?? o.id} {o.client_name}</p>
+              <div key={o.id} className="flex items-start justify-between py-2 border-b border-gray-50 last:border-0 gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">#{o.order_number ?? o.id} {o.client_name || "—"}</p>
                   <p className="text-xs text-gray-500">{PAYMENT_LABELS[o.payment_method]} · {o.created_at}</p>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <p className="text-sm font-semibold text-gray-800">{formatPrice(o.total_amount)}</p>
                   <StatusBadge status={o.status} />
                 </div>
