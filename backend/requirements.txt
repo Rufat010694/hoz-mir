@@ -2,6 +2,7 @@ fastapi>=0.115.0
 email-validator>=2.1.0
 uvicorn[standard]>=0.30.0
 sqlalchemy>=2.0.36
+sqlalchemy-cockroachdb>=0.4.0
 alembic>=1.13.3
 asyncpg>=0.30.0
 psycopg[binary]>=3.2.0
