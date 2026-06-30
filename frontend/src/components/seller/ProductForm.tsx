@@ -22,6 +22,11 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
   const [categoryId, setCategoryId] = useState<string>(String(product?.category_id ?? ""));
   const [isActive, setIsActive] = useState(product?.is_active ?? true);
   const [uploading, setUploading] = useState(false);
+  // For new products: after creation, hold the saved product so user can upload photos
+  const [savedProduct, setSavedProduct] = useState<Product | null>(null);
+
+  // The product we use for photos — either the existing edit target or the just-created one
+  const photoTarget = product ?? savedProduct;
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -36,21 +41,36 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
       if (product) return productsApi.update(product.id, payload);
       return productsApi.create(payload);
     },
-    onSuccess: () => { toast.success(product ? "Товар обновлён" : "Товар добавлен"); onSaved(); },
+    onSuccess: (data) => {
+      if (product) {
+        // Editing — done immediately
+        toast.success("Товар обновлён");
+        onSaved();
+      } else {
+        // New product — stay open so user can add photos
+        toast.success("Товар добавлен — теперь можно добавить фото");
+        setSavedProduct(data as Product);
+        onSaved(); // refresh list in background
+      }
+    },
     onError: () => toast.error("Ошибка сохранения"),
   });
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!product || !e.target.files?.[0]) return;
+    if (!photoTarget || !e.target.files?.[0]) return;
     setUploading(true);
     try {
-      await productsApi.uploadPhoto(product.id, e.target.files[0]);
+      const updated = await productsApi.uploadPhoto(photoTarget.id, e.target.files[0]);
       toast.success("Фото загружено");
+      // Update local savedProduct state so new thumbnails show without closing
+      if (!product) setSavedProduct(updated);
       onSaved();
     } catch {
       toast.error("Ошибка загрузки фото");
     } finally {
       setUploading(false);
+      // Reset file input
+      e.target.value = "";
     }
   };
 
@@ -66,68 +86,76 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
           onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }}
           className="p-4 space-y-4"
         >
-          <Input label="Название" value={name} onChange={(e) => setName(e.target.value)} required />
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Описание</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="Описание товара"
-            />
-          </div>
+          {/* Fields disabled once new product is saved (to prevent re-submit confusion) */}
+          <fieldset disabled={!!savedProduct} className="space-y-4 disabled:opacity-60">
+            <Input label="Название" value={name} onChange={(e) => setName(e.target.value)} required />
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Описание</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="Описание товара"
+              />
+            </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Цена (₸)" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} required />
-            <Input label="Остаток (шт.)" type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} required />
-          </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="Цена (₸)" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} required />
+              <Input label="Остаток (шт.)" type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} required />
+            </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Категория</label>
-            <select
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="">Без категории</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Категория</label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Без категории</option>
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="w-4 h-4 accent-primary-600" />
-            <span className="text-sm text-gray-700">Активен (виден в каталоге)</span>
-          </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="w-4 h-4 accent-primary-600" />
+              <span className="text-sm text-gray-700">Активен (виден в каталоге)</span>
+            </label>
+          </fieldset>
 
-          {/* Photos */}
-          {product && (
+          {/* Photos — shown when editing OR after new product is saved */}
+          {photoTarget && (
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">Фото товара</p>
               <div className="flex gap-2 flex-wrap mb-2">
-                {product.photos.map((ph, i) => (
+                {(photoTarget.photos ?? []).map((ph, i) => (
                   <div key={i} className="relative">
                     <img src={ph.thumbnail_url} alt="" className="w-16 h-16 rounded-lg object-cover" loading="lazy" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                     <button
                       type="button"
-                      onClick={() => productsApi.deletePhoto(product.id, i).then(onSaved)}
+                      onClick={() => productsApi.deletePhoto(photoTarget.id, i).then(onSaved)}
                       className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                     >×</button>
                   </div>
                 ))}
-                <label className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-primary-400">
+                <label className={`w-16 h-16 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer transition-colors ${uploading ? "border-gray-200 opacity-50" : "border-gray-300 hover:border-primary-400"}`}>
                   <Upload size={16} className="text-gray-400" />
                   <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} />
                 </label>
               </div>
+              {uploading && <p className="text-xs text-gray-400">Загрузка...</p>}
             </div>
           )}
 
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>Отмена</Button>
-            <Button type="submit" className="flex-1" loading={saveMutation.isPending}>
-              {product ? "Сохранить" : "Добавить"}
+            <Button type="button" variant="secondary" className="flex-1" onClick={onClose}>
+              {savedProduct ? "Готово" : "Отмена"}
             </Button>
+            {!savedProduct && (
+              <Button type="submit" className="flex-1" loading={saveMutation.isPending}>
+                {product ? "Сохранить" : "Добавить"}
+              </Button>
+            )}
           </div>
         </form>
       </div>

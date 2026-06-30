@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import catalogApi from "@/api/catalog";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice } from "@/utils/format";
-import { ShoppingCart, Search, Image as ImageIcon } from "lucide-react";
+import { ShoppingCart, Search, Image as ImageIcon, MapPin } from "lucide-react";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
 
@@ -41,9 +41,12 @@ export default function CatalogPage() {
             <img src="/logo.png" alt="Хоз Мир" className="h-20 object-contain" />
             <h1 className="text-lg font-bold text-gray-800">{store?.store_name || "Каталог"}</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <Link to={`/catalog/${slug}/track`} className="text-xs text-gray-400 hover:text-primary-600">
-              Мой заказ
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/catalog/${slug}/track`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-xs font-semibold transition-colors"
+            >
+              <MapPin size={13} /> Отследить
             </Link>
             <Link to={`/catalog/${slug}/cart`} className="relative">
               <ShoppingCart size={24} className="text-gray-700" />
