@@ -43,8 +43,16 @@ export const productsApi = {
     return data;
   },
 
-  exportXlsx: () => {
-    window.open("/api/products/export/xlsx", "_blank");
+  exportXlsx: async () => {
+    const response = await api.get("/products/export/xlsx", { responseType: "blob" });
+    const url = URL.createObjectURL(new Blob([response.data]));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "products.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
   },
 
   // Categories

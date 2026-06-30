@@ -52,8 +52,10 @@ export default function CheckoutPage() {
     return () => ws.close();
   }, [orderId]);
 
+  const [storeNameTouched, setStoreNameTouched] = useState(false);
   const phoneErr = phoneTouched ? phoneError(phoneDigits) : null;
-  const canSubmit = !phoneError(phoneDigits) && items.length > 0;
+  const storeNameErr = storeNameTouched && !storeName.trim() ? "Укажите название магазина" : null;
+  const canSubmit = !phoneError(phoneDigits) && !!storeName.trim() && items.length > 0;
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -156,8 +158,17 @@ export default function CheckoutPage() {
       <div className="p-4 space-y-4">
         <p className="text-sm font-medium text-gray-700">Ваши данные</p>
 
-        {/* Store name (optional) */}
-        <Input label="Название магазина (если нужно)" value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Название вашего магазина" />
+        {/* Store name — required */}
+        <div>
+          <Input
+            label="Название магазина *"
+            value={storeName}
+            onChange={(e) => { setStoreName(e.target.value); setStoreNameTouched(true); }}
+            onBlur={() => setStoreNameTouched(true)}
+            placeholder="Название вашего магазина"
+          />
+          {storeNameErr && <p className="text-red-500 text-xs mt-1">{storeNameErr}</p>}
+        </div>
         <Input label="ФИО" value={name} onChange={(e) => setName(e.target.value)} placeholder="Введите ваше ФИО" />
         <PhoneInput
           label="Телефон *"
@@ -201,8 +212,20 @@ export default function CheckoutPage() {
           className="w-full"
           size="lg"
           loading={mutation.isPending}
-          disabled={!canSubmit}
-          onClick={() => { setPhoneTouched(true); if (canSubmit) mutation.mutate(); }}
+          onClick={() => {
+            setPhoneTouched(true);
+            setStoreNameTouched(true);
+            if (!storeName.trim()) {
+              toast.error("Укажите название магазина");
+              return;
+            }
+            if (phoneError(phoneDigits)) {
+              toast.error("Введите корректный номер телефона");
+              return;
+            }
+            if (items.length === 0) return;
+            mutation.mutate();
+          }}
         >
           Отправить заказ
         </Button>
