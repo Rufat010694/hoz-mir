@@ -1,5 +1,5 @@
-export const formatPrice = (price: number) =>
-  new Intl.NumberFormat("ru-KZ", { style: "decimal", minimumFractionDigits: 0 }).format(price) + " ₸";
+export const formatPrice = (price: number | string) =>
+  new Intl.NumberFormat("ru-KZ", { style: "decimal", minimumFractionDigits: 0 }).format(Number(price)) + " ₸";
 
 export const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit" });

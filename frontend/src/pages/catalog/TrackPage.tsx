@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import catalogApi from "@/api/catalog";
 import { formatPrice } from "@/utils/format";
 import { formatDigits, phoneError } from "@/utils/phone";
@@ -30,14 +30,29 @@ type TrackResult = Awaited<ReturnType<typeof catalogApi.trackOrder>>;
 
 export default function TrackPage() {
   const { slug } = useParams<{ slug: string }>();
-  const [orderNum, setOrderNum] = useState("");
-  const [phoneDigits, setPhoneDigits] = useState("");
+  const [searchParams] = useSearchParams();
+  const [orderNum, setOrderNum] = useState(searchParams.get("n") ?? "");
+  const [phoneDigits, setPhoneDigits] = useState(searchParams.get("p") ?? "");
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<TrackResult | null>(null);
   const [liveStatus, setLiveStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+
+  // Auto-search when opened via deep link (?n=&p=)
+  useEffect(() => {
+    const n = searchParams.get("n");
+    const p = searchParams.get("p");
+    if (n && p && slug) {
+      setLoading(true);
+      catalogApi.trackOrder(slug, parseInt(n), p)
+        .then(setOrder)
+        .catch(() => setError("Заказ не найден"))
+        .finally(() => setLoading(false));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // WebSocket for live status updates
   useEffect(() => {
@@ -117,7 +132,7 @@ export default function TrackPage() {
           {/* Live status header */}
           <div className="p-6 text-center border-b">
             <div className={`flex justify-center mb-3 ${info.color}`}>{info.icon}</div>
-            <p className="text-xs text-gray-400 mb-1">Заказ #{order.order_number}</p>
+            <p className="text-xs text-gray-400 mb-1">Заказ #{order.order_number ?? orderNum}</p>
             <p className={`text-xl font-bold ${info.color}`}>{info.label}</p>
             {liveStatus && (
               <p className="text-xs text-green-500 mt-1 animate-pulse">● Статус обновляется в реальном времени</p>

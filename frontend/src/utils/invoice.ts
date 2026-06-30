@@ -8,7 +8,10 @@ export function printInvoice(order: Order, user: { store_name?: string | null; f
   const buyer = [order.client_name, order.client_store].filter(Boolean).join(", ") || "—";
   const buyerPhone = order.client_phone || "—";
 
-  const rows = order.items.map((item, i) => `
+  const rows = order.items.map((item, i) => {
+    const price = Number(item.price);
+    const subtotal = Number(item.subtotal);
+    return `
     <tr>
       <td style="border:1px solid #000;padding:4px;text-align:center">${i + 1}</td>
       <td style="border:1px solid #000;padding:4px">${item.product_name}</td>
@@ -16,9 +19,10 @@ export function printInvoice(order: Order, user: { store_name?: string | null; f
       <td style="border:1px solid #000;padding:4px;text-align:center">шт</td>
       <td style="border:1px solid #000;padding:4px;text-align:center">${item.quantity}</td>
       <td style="border:1px solid #000;padding:4px;text-align:center">${item.quantity}</td>
-      <td style="border:1px solid #000;padding:4px;text-align:right">${item.price.toFixed(2)}</td>
-      <td style="border:1px solid #000;padding:4px;text-align:right">${item.subtotal.toFixed(2)}</td>
-    </tr>`).join("");
+      <td style="border:1px solid #000;padding:4px;text-align:right">${price.toFixed(2)}</td>
+      <td style="border:1px solid #000;padding:4px;text-align:right">${subtotal.toFixed(2)}</td>
+    </tr>`;
+  }).join("");
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>Накладная №${docNum}</title>
@@ -83,7 +87,7 @@ export function printInvoice(order: Order, user: { store_name?: string | null; f
   <tfoot>
     <tr>
       <td colspan="7" style="border:1px solid #000;padding:4px;text-align:right;font-weight:bold">ИТОГО:</td>
-      <td style="border:1px solid #000;padding:4px;text-align:right;font-weight:bold">${order.total_amount.toFixed(2)}</td>
+      <td style="border:1px solid #000;padding:4px;text-align:right;font-weight:bold">${Number(order.total_amount).toFixed(2)}</td>
     </tr>
   </tfoot>
 </table>
@@ -94,17 +98,14 @@ export function printInvoice(order: Order, user: { store_name?: string | null; f
 ${order.comment ? `<p style="font-size:10px;margin-top:8px">Примечание: ${order.comment}</p>` : ""}
 </body></html>`;
 
-  // Use hidden iframe — avoids popup blockers entirely
-  const iframe = document.createElement("iframe");
-  iframe.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:0";
-  document.body.appendChild(iframe);
-  const doc = iframe.contentDocument!;
-  doc.open();
-  doc.write(html);
-  doc.close();
-  setTimeout(() => {
-    iframe.contentWindow?.focus();
-    iframe.contentWindow?.print();
-    setTimeout(() => document.body.removeChild(iframe), 3000);
-  }, 500);
+  // Download as HTML file — works on all browsers, no popup blockers
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `nakladnaya-${docNum}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
 }

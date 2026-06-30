@@ -99,7 +99,7 @@ export default function OrdersPage() {
                   onClick={(e) => handlePrint(e, o.id)}
                   disabled={printingId === o.id}
                   className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg"
-                  title="Накладная"
+                  title="Печать накладной"
                 >
                   <Printer size={15} />
                 </button>
@@ -128,7 +128,7 @@ export default function OrdersPage() {
               <th className="px-4 py-3 text-center">Статус</th>
               <th className="px-4 py-3 text-left">Оплата</th>
               <th className="px-4 py-3 text-right">Время</th>
-              <th className="px-4 py-3 text-center">Накладная</th>
+              <th className="px-4 py-3 text-center">Печать</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">

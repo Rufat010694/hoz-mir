@@ -1,7 +1,7 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice } from "@/utils/format";
-import { ArrowLeft, Plus, Minus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Trash2, MapPin } from "lucide-react";
 import { Button } from "@/components/common/Button";
 
 export default function CartPage() {
@@ -62,14 +62,20 @@ export default function CartPage() {
             ))}
           </div>
 
-          <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4">
-            <div className="flex justify-between mb-3">
+          <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4 space-y-2">
+            <div className="flex justify-between mb-1">
               <span className="text-gray-600">Итого</span>
               <span className="text-xl font-bold text-gray-800">{formatPrice(total())}</span>
             </div>
             <Button className="w-full" size="lg" onClick={() => navigate(`/catalog/${slug}/checkout`)}>
               Оформить заказ
             </Button>
+            <Link
+              to={`/catalog/${slug}/track`}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold text-sm transition-colors"
+            >
+              <MapPin size={16} /> Отследить заказ
+            </Link>
           </div>
         </div>
       )}

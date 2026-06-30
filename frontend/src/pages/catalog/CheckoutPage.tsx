@@ -6,9 +6,10 @@ import { useCartStore } from "@/store/cartStore";
 import { formatPrice } from "@/utils/format";
 import { formatDigits, phoneError } from "@/utils/phone";
 import PhoneInput from "@/components/common/PhoneInput";
-import { ArrowLeft, CheckCircle, Clock, Package, Truck } from "lucide-react";
+import { ArrowLeft, CheckCircle, Clock, Package, Truck, Copy, Share2 } from "lucide-react";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
+import toast from "react-hot-toast";
 
 const STATUS_INFO: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   new:        { label: "Принят",       icon: <CheckCircle size={40} />, color: "text-blue-500" },
@@ -76,13 +77,34 @@ export default function CheckoutPage() {
     const info = STATUS_INFO[orderStatus] || STATUS_INFO.new;
     const steps = ["new", "processing", "ready", "delivered"];
     const currentStep = steps.indexOf(orderStatus);
+
+    // Permanent tracking deep link
+    const trackUrl = orderNumber
+      ? `${window.location.origin}/catalog/${slug}/track?n=${orderNumber}&p=${encodeURIComponent(formatDigits(phoneDigits))}`
+      : null;
+
+    const copyTrackLink = () => {
+      if (trackUrl) {
+        navigator.clipboard.writeText(trackUrl);
+        toast.success("Ссылка скопирована!");
+      }
+    };
+
+    const shareTrackLink = async () => {
+      if (navigator.share && trackUrl) {
+        try { await navigator.share({ title: `Заказ #${orderNumber}`, url: trackUrl }); } catch {}
+      } else {
+        copyTrackLink();
+      }
+    };
+
     return (
       <div className="max-w-2xl mx-auto flex flex-col items-center justify-center min-h-screen p-4 text-center">
         <div className={`mb-4 ${info.color}`}>{info.icon}</div>
         <h2 className="text-2xl font-bold text-gray-800 mb-1">Заказ #{orderNumber ?? orderId}</h2>
         <div className={`text-lg font-semibold mb-2 ${info.color}`}>{info.label}</div>
-        <p className="text-gray-400 text-sm mb-8">Статус обновляется автоматически</p>
-        <div className="flex items-center gap-1 mb-8">
+        <p className="text-gray-400 text-sm mb-6">Статус обновляется автоматически</p>
+        <div className="flex items-center gap-1 mb-6">
           {steps.map((s, i) => (
             <div key={s} className="flex items-center gap-1">
               <div className={`w-3 h-3 rounded-full transition-all ${currentStep >= i ? "bg-primary-500" : "bg-gray-200"}`} />
@@ -90,13 +112,36 @@ export default function CheckoutPage() {
             </div>
           ))}
         </div>
+
+        {/* Shareable tracking link */}
+        {trackUrl && (
+          <div className="w-full max-w-sm bg-gray-50 rounded-2xl p-4 mb-4 text-left">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ссылка для отслеживания</p>
+            <p className="text-xs text-gray-400 break-all mb-3">{trackUrl}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={copyTrackLink}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-gray-200 text-sm text-gray-700 font-medium hover:bg-gray-50"
+              >
+                <Copy size={14} /> Скопировать
+              </button>
+              <button
+                onClick={shareTrackLink}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-medium"
+              >
+                <Share2 size={14} /> Поделиться
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mt-2 text-center">Ссылка не истекает — сохрани её</p>
+          </div>
+        )}
+
         <div className="flex flex-col gap-2 w-full max-w-xs">
-          <Button onClick={() => navigate(`/catalog/${slug}/track`)}>Отследить заказ</Button>
+          <Button onClick={() => navigate(`/catalog/${slug}/track?n=${orderNumber}&p=${encodeURIComponent(formatDigits(phoneDigits))}`)}>
+            Отследить заказ
+          </Button>
           <Button variant="secondary" onClick={() => navigate(`/catalog/${slug}`)}>Вернуться в каталог</Button>
         </div>
-        <p className="text-xs text-gray-400 mt-4">
-          Для отслеживания используй номер заказа <strong>#{orderNumber}</strong> и свой телефон
-        </p>
       </div>
     );
   }

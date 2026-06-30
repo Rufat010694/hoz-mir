@@ -45,8 +45,10 @@ export default function OrderDetailModal({ orderId, onClose, onUpdated }: Props)
 
   const isBusy = statusMutation.isPending || paymentMutation.isPending;
 
+  const FINAL_STATUSES: OrderStatus[] = ["delivered", "cancelled"];
+
   const changeStatus = (status: OrderStatus) => {
-    onClose(); // закрываем сразу, не ждём ответа
+    onClose();
     statusMutation.mutate(status);
   };
 
@@ -71,7 +73,7 @@ export default function OrderDetailModal({ orderId, onClose, onUpdated }: Props)
               onClick={handlePrint}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-primary-50 hover:text-primary-700 text-gray-600 rounded-lg text-sm font-medium transition-colors"
             >
-              <Printer size={15} /> Накладная
+              <Printer size={15} /> Печать
             </button>
             <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600"><X size={20} /></button>
           </div>
@@ -114,8 +116,9 @@ export default function OrderDetailModal({ orderId, onClose, onUpdated }: Props)
             </select>
           </div>
 
-          <div className="flex gap-3">
-            {order.status !== "cancelled" && (
+          {/* Status buttons — hidden for final statuses */}
+          {!FINAL_STATUSES.includes(order.status) && (
+            <div className="flex gap-3">
               <Button
                 variant="danger"
                 size="sm"
@@ -124,17 +127,17 @@ export default function OrderDetailModal({ orderId, onClose, onUpdated }: Props)
               >
                 Отменить
               </Button>
-            )}
-            {nextStatus && STATUS_NEXT_LABEL[order.status] && (
-              <Button
-                className="flex-1"
-                onClick={() => changeStatus(nextStatus)}
-                disabled={isBusy}
-              >
-                → {STATUS_NEXT_LABEL[order.status]}
-              </Button>
-            )}
-          </div>
+              {nextStatus && STATUS_NEXT_LABEL[order.status] && (
+                <Button
+                  className="flex-1"
+                  onClick={() => changeStatus(nextStatus)}
+                  disabled={isBusy}
+                >
+                  → {STATUS_NEXT_LABEL[order.status]}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
