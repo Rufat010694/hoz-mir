@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clientsApi } from "@/api/clients";
 import { formatPrice } from "@/utils/format";
-import { extractDigits, formatDigits, phoneError } from "@/utils/phone";
+import { formatDigits, phoneError } from "@/utils/phone";
+import PhoneInput from "@/components/common/PhoneInput";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
 import toast from "react-hot-toast";
@@ -51,16 +52,13 @@ export default function ClientsPage() {
         <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Input
+              <PhoneInput
                 label="Телефон *"
-                type="text"
-                inputMode="tel"
-                value={formatDigits(phoneDigits)}
-                onChange={(e) => { setPhoneDigits(extractDigits(e.target.value)); setPhoneTouched(true); }}
-                onBlur={() => setPhoneTouched(true)}
-                placeholder="+7 (___) ___-__-__"
+                value={phoneDigits}
+                onChange={(d) => { setPhoneDigits(d); setPhoneTouched(true); }}
+                touched={phoneTouched}
+                required
               />
-              {phoneErr && <p className="mt-1 text-xs text-red-500">{phoneErr}</p>}
             </div>
             <Input label="Имя" value={name} onChange={(e) => setName(e.target.value)} placeholder="Введите имя" />
           </div>

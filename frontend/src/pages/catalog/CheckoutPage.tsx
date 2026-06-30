@@ -4,7 +4,8 @@ import { useMutation } from "@tanstack/react-query";
 import catalogApi from "@/api/catalog";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice } from "@/utils/format";
-import { extractDigits, formatDigits, phoneError } from "@/utils/phone";
+import { formatDigits, phoneError } from "@/utils/phone";
+import PhoneInput from "@/components/common/PhoneInput";
 import { ArrowLeft, CheckCircle, Clock, Package, Truck } from "lucide-react";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
@@ -105,22 +106,13 @@ export default function CheckoutPage() {
         {/* Store name (optional) */}
         <Input label="Название магазина (если нужно)" value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Название вашего магазина" />
         <Input label="ФИО" value={name} onChange={(e) => setName(e.target.value)} placeholder="Введите ваше ФИО" />
-        <div>
-          <Input
-            label="Телефон *"
-            type="text"
-            inputMode="tel"
-            value={formatDigits(phoneDigits)}
-            onChange={(e) => {
-              setPhoneDigits(extractDigits(e.target.value));
-              setPhoneTouched(true);
-            }}
-            onBlur={() => setPhoneTouched(true)}
-            placeholder="+7 (___) ___-__-__"
-            required
-          />
-          {phoneErr && <p className="mt-1 text-xs text-red-500">{phoneErr}</p>}
-        </div>
+        <PhoneInput
+          label="Телефон *"
+          value={phoneDigits}
+          onChange={(d) => { setPhoneDigits(d); setPhoneTouched(true); }}
+          touched={phoneTouched}
+          required
+        />
 
         {/* Payment */}
         <div className="flex flex-col gap-2">

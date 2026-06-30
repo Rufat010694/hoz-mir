@@ -4,7 +4,8 @@ import { ordersApi } from "@/api/orders";
 import { productsApi } from "@/api/products";
 import { clientsApi } from "@/api/clients";
 import { formatPrice } from "@/utils/format";
-import { extractDigits, formatDigits, phoneError } from "@/utils/phone";
+import { formatDigits, phoneError } from "@/utils/phone";
+import PhoneInput from "@/components/common/PhoneInput";
 import { CartItem, PaymentMethod } from "@/types";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
@@ -70,18 +71,13 @@ export default function CreateOrderModal({ onClose, onSaved }: Props) {
         </div>
         <div className="p-4 space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Input
-                label="Телефон клиента *"
-                type="text"
-                inputMode="tel"
-                value={formatDigits(clientPhoneDigits)}
-                onChange={(e) => { setClientPhoneDigits(extractDigits(e.target.value)); setPhoneTouched(true); }}
-                onBlur={() => setPhoneTouched(true)}
-                placeholder="+7 (___) ___-__-__"
-              />
-              {phoneErr && <p className="mt-1 text-xs text-red-500">{phoneErr}</p>}
-            </div>
+            <PhoneInput
+              label="Телефон клиента *"
+              value={clientPhoneDigits}
+              onChange={(d) => { setClientPhoneDigits(d); setPhoneTouched(true); }}
+              touched={phoneTouched}
+              required
+            />
             <Input label="Имя клиента" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Необязательно" />
           </div>
 
