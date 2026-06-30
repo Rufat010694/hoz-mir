@@ -24,7 +24,6 @@ async def upload_image(image_bytes: bytes, content_type: str = "image/webp") -> 
         Key=key,
         Body=image_bytes,
         ContentType=content_type,
-        ACL="public-read",
     )
     url = f"{settings.B2_ENDPOINT_URL}/{settings.B2_BUCKET_NAME}/{key}"
     return {"url": url, "key": key}

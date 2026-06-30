@@ -9,6 +9,7 @@ from app.models.client import Client
 from app.services.deps import get_current_user
 from datetime import datetime, date, timedelta
 from decimal import Decimal
+from sqlalchemy import cast, Numeric
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -44,7 +45,7 @@ async def get_dashboard(
 
     # Today revenue
     today_revenue = await db.execute(
-        select(func.coalesce(func.sum(Order.total_amount), 0)).where(
+        select(func.coalesce(func.sum(Order.total_amount), Decimal(0))).where(
             Order.user_id == current_user.id,
             Order.created_at >= today_start,
             Order.status != OrderStatus.cancelled,
@@ -122,7 +123,7 @@ async def get_sales_report(
         select(
             func.date(Order.created_at).label("date"),
             func.count(Order.id).label("orders"),
-            func.coalesce(func.sum(Order.total_amount), 0).label("revenue"),
+            func.coalesce(func.sum(Order.total_amount), Decimal(0)).label("revenue"),
         )
         .where(
             Order.user_id == current_user.id,
