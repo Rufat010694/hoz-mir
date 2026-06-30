@@ -1,0 +1,139 @@
+"""Public catalog routes — no authentication required."""
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from app.database import get_db
+from app.models.user import User
+from app.models.product import Product
+from app.models.category import Category
+from app.models.order import Order
+from app.models.client import Client
+from app.schemas.product import ProductResponse, CategoryResponse
+from app.schemas.order import OrderCreate, OrderResponse
+from decimal import Decimal
+
+router = APIRouter(prefix="/catalog", tags=["catalog"])
+
+
+@router.get("/{slug}", response_model=dict)
+async def get_store_info(slug: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.catalog_slug == slug, User.is_active == True))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(404, "Store not found")
+    return {
+        "store_name": user.store_name or user.username,
+        "slug": slug,
+    }
+
+
+@router.get("/{slug}/products", response_model=list[ProductResponse])
+async def get_catalog_products(
+    slug: str,
+    category_id: int | None = Query(None),
+    search: str | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+):
+    ur = await db.execute(select(User).where(User.catalog_slug == slug, User.is_active == True))
+    user = ur.scalar_one_or_none()
+    if not user:
+        raise HTTPException(404, "Store not found")
+
+    q = select(Product).where(Product.user_id == user.id, Product.is_active == True)
+    if category_id:
+        q = q.where(Product.category_id == category_id)
+    if search:
+        q = q.where(Product.name.ilike(f"%{search}%"))
+    q = q.order_by(Product.name)
+    result = await db.execute(q)
+    return result.scalars().all()
+
+
+@router.get("/{slug}/categories", response_model=list[CategoryResponse])
+async def get_catalog_categories(slug: str, db: AsyncSession = Depends(get_db)):
+    ur = await db.execute(select(User).where(User.catalog_slug == slug, User.is_active == True))
+    user = ur.scalar_one_or_none()
+    if not user:
+        raise HTTPException(404, "Store not found")
+
+    result = await db.execute(
+        select(Category).where(Category.user_id == user.id).order_by(Category.sort_order)
+    )
+    return result.scalars().all()
+
+
+@router.post("/{slug}/orders", response_model=dict, status_code=201)
+async def place_catalog_order(
+    slug: str,
+    data: OrderCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    ur = await db.execute(select(User).where(User.catalog_slug == slug, User.is_active == True))
+    seller = ur.scalar_one_or_none()
+    if not seller:
+        raise HTTPException(404, "Store not found")
+
+    # Auto-create or find client by phone
+    client = None
+    if data.client_phone:
+        cr = await db.execute(
+            select(Client).where(Client.user_id == seller.id, Client.phone == data.client_phone)
+        )
+        client = cr.scalar_one_or_none()
+        if not client:
+            client = Client(
+                user_id=seller.id,
+                phone=data.client_phone,
+                full_name=data.client_name,
+                store_name=data.client_store,
+            )
+            db.add(client)
+            await db.flush()
+
+    order = Order(
+        user_id=seller.id,
+        client_id=client.id if client else None,
+        client_phone=data.client_phone,
+        client_name=data.client_name,
+        client_store=data.client_store,
+        payment_method=data.payment_method,
+        comment=data.comment,
+        source="catalog",
+        catalog_slug=slug,
+    )
+    db.add(order)
+    await db.flush()
+
+    from app.models.order import OrderItem
+    total = Decimal("0")
+    for item_data in data.items:
+        pr = await db.execute(
+            select(Product).where(Product.id == item_data.product_id, Product.user_id == seller.id)
+        )
+        product = pr.scalar_one_or_none()
+        if not product:
+            raise HTTPException(400, f"Product {item_data.product_id} not found")
+        subtotal = product.price * item_data.quantity
+        total += subtotal
+        item = OrderItem(
+            order_id=order.id,
+            product_id=product.id,
+            product_name=product.name,
+            price=product.price,
+            quantity=item_data.quantity,
+            subtotal=subtotal,
+        )
+        db.add(item)
+
+    order.total_amount = total
+    await db.commit()
+
+    from app.websocket.manager import publish_event
+    await publish_event(seller.id, "new_order", {"order_id": order.id, "total": float(total), "source": "catalog"})
+
+    return {
+        "order_id": order.id,
+        "total": float(total),
+        "message": "Заказ принят! Продавец свяжется с вами для подтверждения.",
+    }

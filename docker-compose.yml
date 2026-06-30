@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hozmir-postgres
+    environment:
+      POSTGRES_DB: hozmir
+      POSTGRES_USER: hozmir
+      POSTGRES_PASSWORD: hozmir_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hozmir"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: hozmir-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: hozmir-backend
+    env_file: ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://hozmir:hozmir_password@postgres:5432/hozmir
+      DATABASE_SYNC_URL: postgresql://hozmir:hozmir_password@postgres:5432/hozmir
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  frontend:
+    image: node:20-alpine
+    container_name: hozmir-frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
