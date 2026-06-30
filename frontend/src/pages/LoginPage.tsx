@@ -24,8 +24,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-sm p-8">
-        <div className="text-center mb-8">
-          <img src="/logo.png" alt="Хоз Мир" className="h-52 mx-auto mb-2 object-contain" />
+        <div className="text-center mb-6">
+          <img src="/logo.png" alt="Хоз Мир" className="h-64 mx-auto mb-1 object-contain" />
           <p className="text-gray-500 text-sm">Вход в систему</p>
         </div>
 
