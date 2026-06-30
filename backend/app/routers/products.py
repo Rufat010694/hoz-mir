@@ -93,13 +93,30 @@ async def list_products(
     return result.scalars().all()
 
 
+async def _resolve_category_id(db: AsyncSession, user_id: int, cat_id: int) -> int:
+    """Find exact category ID even when JS float64 precision is lost (±64 range)."""
+    res = await db.execute(
+        select(Category).where(
+            Category.user_id == user_id,
+            Category.id.between(cat_id - 64, cat_id + 64),
+        )
+    )
+    cat = res.scalar_one_or_none()
+    if not cat:
+        raise HTTPException(400, "Category not found")
+    return cat.id
+
+
 @router.post("", response_model=ProductResponse, status_code=201)
 async def create_product(
     data: ProductCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    product = Product(user_id=current_user.id, **data.model_dump())
+    payload = data.model_dump()
+    if payload.get("category_id") is not None:
+        payload["category_id"] = await _resolve_category_id(db, current_user.id, payload["category_id"])
+    product = Product(user_id=current_user.id, **payload)
     db.add(product)
     await db.commit()
     await db.refresh(product)
@@ -136,6 +153,11 @@ async def update_product(
     if not product:
         raise HTTPException(404, "Product not found")
     update_data = data.model_dump(exclude_unset=True)
+    # Fix float64 precision loss: category_id from JS may be off by ≤24
+    if "category_id" in update_data and update_data["category_id"] is not None:
+        update_data["category_id"] = await _resolve_category_id(
+            db, current_user.id, update_data["category_id"]
+        )
     if "price" in update_data and update_data["price"] != product.price:
         ph = PriceHistory(product_id=product.id, old_price=product.price, new_price=update_data["price"])
         db.add(ph)
