@@ -5,7 +5,9 @@ import { formatPrice, formatDate } from "@/utils/format";
 import { StatusBadge, PaymentBadge } from "@/components/common/Badge";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
-import { Plus } from "lucide-react";
+import { Plus, Printer } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import { printInvoice } from "@/utils/invoice";
 import CreateOrderModal from "@/components/seller/CreateOrderModal";
 import OrderDetailModal from "@/components/seller/OrderDetailModal";
 
@@ -19,10 +21,26 @@ const STATUSES = [
 
 export default function OrdersPage() {
   const qc = useQueryClient();
+  const { user } = useAuthStore();
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<any>(null);
+  const [printingId, setPrintingId] = useState<any>(null);
+
+  const handlePrint = async (e: React.MouseEvent, id: any) => {
+    e.stopPropagation();
+    if (!user) return;
+    setPrintingId(id);
+    try {
+      const order = await ordersApi.get(id);
+      printInvoice(order, { ...user, iin: (user as any).iin });
+    } catch {
+      // silent
+    } finally {
+      setPrintingId(null);
+    }
+  };
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders", status, search],
@@ -68,14 +86,24 @@ export default function OrdersPage() {
         ) : orders.length === 0 ? (
           <div className="text-center py-12 text-gray-400">Заказов нет</div>
         ) : orders.map((o) => (
-          <button
+          <div
             key={o.id}
-            className="w-full bg-white rounded-xl border border-gray-100 p-3 text-left active:bg-gray-50"
+            className="bg-white rounded-xl border border-gray-100 p-3"
             onClick={() => setSelectedOrderId(o.id)}
           >
             <div className="flex items-center justify-between mb-1">
               <span className="font-semibold text-gray-800">#{o.order_number ?? o.id}</span>
-              <StatusBadge status={o.status} />
+              <div className="flex items-center gap-2">
+                <StatusBadge status={o.status} />
+                <button
+                  onClick={(e) => handlePrint(e, o.id)}
+                  disabled={printingId === o.id}
+                  className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg"
+                  title="Накладная"
+                >
+                  <Printer size={15} />
+                </button>
+              </div>
             </div>
             <p className="text-sm text-gray-700 truncate">{o.client_name || o.client_phone || "—"}</p>
             <div className="flex items-center justify-between mt-1.5">
@@ -85,7 +113,7 @@ export default function OrdersPage() {
                 <span className="text-xs text-gray-400">{formatDate(o.created_at)}</span>
               </div>
             </div>
-          </button>
+          </div>
         ))}
       </div>
 
@@ -100,6 +128,7 @@ export default function OrdersPage() {
               <th className="px-4 py-3 text-center">Статус</th>
               <th className="px-4 py-3 text-left">Оплата</th>
               <th className="px-4 py-3 text-right">Время</th>
+              <th className="px-4 py-3 text-center">Накладная</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -115,6 +144,15 @@ export default function OrdersPage() {
                 <td className="px-4 py-3 text-center"><StatusBadge status={o.status} /></td>
                 <td className="px-4 py-3"><PaymentBadge method={o.payment_method} /></td>
                 <td className="px-4 py-3 text-right text-gray-500">{formatDate(o.created_at)}</td>
+                <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={(e) => handlePrint(e, o.id)}
+                    disabled={printingId === o.id}
+                    className="flex items-center gap-1 mx-auto px-2 py-1 text-xs text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    <Printer size={13} /> {printingId === o.id ? "..." : "Печать"}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
