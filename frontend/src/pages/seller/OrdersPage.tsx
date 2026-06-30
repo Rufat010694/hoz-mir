@@ -80,7 +80,7 @@ export default function OrdersPage() {
                 className="hover:bg-gray-50 cursor-pointer"
                 onClick={() => setSelectedOrderId(o.id)}
               >
-                <td className="px-4 py-3 font-medium text-gray-700">#{o.id}</td>
+                <td className="px-4 py-3 font-medium text-gray-700">#{o.order_number ?? o.id}</td>
                 <td className="px-4 py-3 text-gray-800">{o.client_name || o.client_phone || "—"}</td>
                 <td className="px-4 py-3 text-right font-semibold text-gray-800">{formatPrice(o.total_amount)}</td>
                 <td className="px-4 py-3 text-center"><StatusBadge status={o.status} /></td>

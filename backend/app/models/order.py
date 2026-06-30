@@ -36,6 +36,8 @@ class Order(Base):
     client_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     client_store: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
+    order_number: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+
     status: Mapped[OrderStatus] = mapped_column(SAEnum(OrderStatus), default=OrderStatus.new)
     payment_method: Mapped[PaymentMethod] = mapped_column(SAEnum(PaymentMethod), default=PaymentMethod.cash)
     total_amount: Mapped[decimal.Decimal] = mapped_column(Numeric(12, 2), default=0)

@@ -1,7 +1,7 @@
 """Public catalog routes — no authentication required."""
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.user import User
@@ -118,8 +118,14 @@ async def place_catalog_order(
             db.add(client)
             await db.flush()
 
+    num_res = await db.execute(
+        select(func.coalesce(func.max(Order.order_number), 0)).where(Order.user_id == seller.id)
+    )
+    next_num = (num_res.scalar() or 0) + 1
+
     order = Order(
         user_id=seller.id,
+        order_number=next_num,
         client_id=client.id if client else None,
         client_phone=data.client_phone,
         client_name=data.client_name,
@@ -160,7 +166,8 @@ async def place_catalog_order(
     await publish_event(seller.id, "new_order", {"order_id": order.id, "total": float(total), "source": "catalog"})
 
     return {
-        "order_id": order.id,
+        "order_id": str(order.id),
+        "order_number": order.order_number,
         "total": float(total),
         "message": "Заказ принят! Продавец свяжется с вами для подтверждения.",
     }

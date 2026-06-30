@@ -38,9 +38,23 @@ export function formatDigits(digits: string): string {
  */
 export function extractDigits(raw: string): string {
   const digits = raw.replace(/\D/g, "");
-  // If starts with 8, normalise to 7
+  // 8XXXXXXXXXX → 7XXXXXXXXXX
   if (digits.startsWith("8")) return "7" + digits.slice(1, 11);
   return digits.slice(0, 11);
+}
+
+/**
+ * Auto-complete a 10-digit number by prepending "7" (CIS country code).
+ * Call on blur to handle users who skip the country code.
+ */
+export function autoCompletePhone(digits: string): string {
+  if (digits.length === 10 && !digits.startsWith("7")) {
+    return "7" + digits; // e.g. 9051234567 → 79051234567
+  }
+  if (digits.length === 10 && digits.startsWith("7")) {
+    return "7" + digits; // e.g. 7051234567 → 77051234567 (Kazakh mobile)
+  }
+  return digits;
 }
 
 /**

@@ -33,7 +33,7 @@ export default function DashboardPage() {
             {data?.recent_orders.map((o) => (
               <div key={o.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                 <div>
-                  <p className="text-sm font-medium text-gray-800">#{o.id} {o.client_name}</p>
+                  <p className="text-sm font-medium text-gray-800">#{o.order_number ?? o.id} {o.client_name}</p>
                   <p className="text-xs text-gray-500">{PAYMENT_LABELS[o.payment_method]} · {o.created_at}</p>
                 </div>
                 <div className="text-right">

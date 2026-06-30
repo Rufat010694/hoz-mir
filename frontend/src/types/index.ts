@@ -63,6 +63,7 @@ export interface OrderItem {
 
 export interface Order {
   id: DbId;
+  order_number: number | null;
   client_id: DbId | null;
   client_phone: string | null;
   client_name: string | null;
@@ -79,6 +80,7 @@ export interface Order {
 
 export interface OrderListItem {
   id: DbId;
+  order_number: number | null;
   client_id: DbId | null;
   client_name: string | null;
   client_phone: string | null;

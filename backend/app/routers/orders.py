@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.user import User
@@ -56,8 +56,15 @@ async def create_order(
             client_name = client.full_name
             client_phone = client.phone
 
+    # Short sequential order number per seller
+    num_res = await db.execute(
+        select(func.coalesce(func.max(Order.order_number), 0)).where(Order.user_id == current_user.id)
+    )
+    next_num = (num_res.scalar() or 0) + 1
+
     order = Order(
         user_id=current_user.id,
+        order_number=next_num,
         client_id=data.client_id,
         client_phone=client_phone,
         client_name=client_name,

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { extractDigits, formatDigits, phoneError } from "@/utils/phone";
+import { autoCompletePhone, extractDigits, formatDigits, phoneError } from "@/utils/phone";
 
 interface PhoneInputProps {
   value: string;           // raw digits
@@ -38,7 +38,12 @@ export default function PhoneInput({ value, onChange, label, required, touched }
         className="w-full px-3 py-2 border border-gray-300 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
         onChange={(e) => onChange(extractDigits(e.target.value))}
         onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
+        onBlur={() => {
+          setIsFocused(false);
+          // Auto-prepend country code if user skipped it (10 digits)
+          const completed = autoCompletePhone(value);
+          if (completed !== value) onChange(completed);
+        }}
       />
       {err && <p className="text-xs text-red-500">{err}</p>}
     </div>

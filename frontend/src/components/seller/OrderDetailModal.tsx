@@ -55,7 +55,7 @@ export default function OrderDetailModal({ orderId, onClose, onUpdated }: Props)
       <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto">
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-3">
-            <h3 className="font-semibold text-gray-800">Заказ #{order.id}</h3>
+            <h3 className="font-semibold text-gray-800">Заказ #{order.order_number ?? order.id}</h3>
             <StatusBadge status={order.status} />
           </div>
           <button onClick={onClose}><X size={20} className="text-gray-400" /></button>

@@ -57,6 +57,7 @@ class OrderPaymentUpdate(BaseModel):
 
 class OrderResponse(BaseModel):
     id: str
+    order_number: int | None
     client_id: str | None
     client_phone: str | None
     client_name: str | None
@@ -80,6 +81,7 @@ class OrderResponse(BaseModel):
 
 class OrderListResponse(BaseModel):
     id: str
+    order_number: int | None
     client_id: str | None
     client_name: str | None
     client_phone: str | None

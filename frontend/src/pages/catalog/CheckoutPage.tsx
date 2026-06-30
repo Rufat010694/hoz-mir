@@ -29,7 +29,8 @@ export default function CheckoutPage() {
   const [payment, setPayment] = useState("cash");
   const [comment, setComment] = useState("");
   const [success, setSuccess] = useState(false);
-  const [orderId, setOrderId] = useState<number | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [orderNumber, setOrderNumber] = useState<number | null>(null);
   const [orderStatus, setOrderStatus] = useState("new");
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -64,7 +65,8 @@ export default function CheckoutPage() {
         items: items.map((i) => ({ product_id: i.product.id, quantity: i.quantity })),
       }),
     onSuccess: (data) => {
-      setOrderId(data.order_id);
+      setOrderId(String(data.order_id));
+      setOrderNumber(data.order_number ?? null);
       setSuccess(true);
       clearCart();
     },
@@ -77,7 +79,7 @@ export default function CheckoutPage() {
     return (
       <div className="max-w-2xl mx-auto flex flex-col items-center justify-center min-h-screen p-4 text-center">
         <div className={`mb-4 ${info.color}`}>{info.icon}</div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-1">Заказ #{orderId}</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-1">Заказ #{orderNumber ?? orderId}</h2>
         <div className={`text-lg font-semibold mb-2 ${info.color}`}>{info.label}</div>
         <p className="text-gray-400 text-sm mb-8">Статус обновляется автоматически</p>
         <div className="flex items-center gap-1 mb-8">
