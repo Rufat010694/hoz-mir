@@ -35,41 +35,58 @@ export default function CatalogPage() {
   return (
     <div className="max-w-2xl mx-auto">
       {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-100 z-30 px-4 py-3">
-        <div className="flex items-center justify-between mb-3">
-          {/* Logo centered, stretched a bit */}
-          <div className="flex-1 flex justify-center">
-            <img
-              src="/logo.png"
-              alt="Хоз Мир"
-              className="h-16 object-contain"
-              style={{ transform: "scaleX(1.12)", transformOrigin: "center" }}
-            />
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Link
-              to={`/catalog/${slug}/track`}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-xs font-semibold transition-colors"
-            >
-              <MapPin size={13} /> Отследить
-            </Link>
-            <Link to={`/catalog/${slug}/cart`} className="relative">
-              <ShoppingCart size={24} className="text-gray-700" />
-              {itemCount() > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-primary-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                  {itemCount()}
-                </span>
-              )}
-            </Link>
-          </div>
+      <div className="sticky top-0 z-30 border-b" style={{ background: "#F3F4F6" }}>
+        {/* Top bar: logo | auto gap | track button | 16px | cart */}
+        <div className="flex items-center h-[72px] pl-[16px] pr-[24px]">
+          {/* Logo: 160×40px */}
+          <img
+            src="/logo.png"
+            alt="Хоз Мир"
+            style={{ width: 160, height: 40, objectFit: "contain", objectPosition: "left center", flexShrink: 0 }}
+          />
+
+          {/* Auto spacer */}
+          <div className="flex-1" />
+
+          {/* Track button: h-10, px-5, radius-full, bg #16A34A */}
+          <Link
+            to={`/catalog/${slug}/track`}
+            className="flex items-center gap-1.5 font-medium transition-colors hover:opacity-90"
+            style={{
+              height: 40,
+              padding: "0 20px",
+              borderRadius: 20,
+              background: "#16A34A",
+              color: "#fff",
+              fontSize: 15,
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            <MapPin size={18} color="#fff" />
+            Отследить
+          </Link>
+
+          {/* Gap 16px then cart */}
+          <div style={{ width: 16, flexShrink: 0 }} />
+          <Link to={`/catalog/${slug}/cart`} className="relative flex-shrink-0">
+            <ShoppingCart size={24} color="#1F2937" />
+            {itemCount() > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-primary-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                {itemCount()}
+              </span>
+            )}
+          </Link>
         </div>
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <div className="relative px-4 pb-3">
+          <Search size={16} className="absolute left-7 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Поиск товаров..."
-            className="w-full pl-9 pr-3 py-2 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-9 pr-3 py-2 bg-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 border border-gray-200"
           />
         </div>
       </div>
