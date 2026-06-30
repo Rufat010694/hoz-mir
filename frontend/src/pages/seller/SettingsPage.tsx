@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import api from "@/api";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { UserPlus } from "lucide-react";
@@ -18,7 +18,7 @@ export default function SettingsPage() {
   const [storeName, setStoreName] = useState(user?.store_name ?? "");
 
   const profileMutation = useMutation({
-    mutationFn: () => axios.patch("/api/auth/me", { iin, full_name: fullName, store_name: storeName }),
+    mutationFn: () => api.patch("/auth/me", { iin, full_name: fullName, store_name: storeName }),
     onSuccess: async () => { await loadUser(); toast.success("Профиль обновлён"); },
     onError: () => toast.error("Ошибка сохранения"),
   });
@@ -35,7 +35,7 @@ export default function SettingsPage() {
 
   const createUserMutation = useMutation({
     mutationFn: () =>
-      axios.post("/api/auth/register", {
+      api.post("/auth/register", {
         username: newUsername,
         password: newPassword,
         role: newRole,
