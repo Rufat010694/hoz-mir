@@ -36,6 +36,7 @@
     "postcss": "^8.4.38",
     "eslint": "^8.57.0",
     "@typescript-eslint/eslint-plugin": "^7.13.0",
-    "@typescript-eslint/parser": "^7.13.0"
+    "@typescript-eslint/parser": "^7.13.0",
+    "@types/node": "^20.0.0"
   }
 }
