@@ -3,7 +3,3 @@ nixPkgs = ["python312", "postgresql"]
 
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
-
-[start]
-# Миграции запускаем перед стартом — безопаснее чем в build фазе
-cmd = "sh -c 'alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT'"
