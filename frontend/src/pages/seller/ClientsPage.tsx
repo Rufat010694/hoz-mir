@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clientsApi } from "@/api/clients";
 import { formatPrice } from "@/utils/format";
-import { formatPhoneInput, phoneError } from "@/utils/phone";
+import { extractDigits, formatDigits, phoneError } from "@/utils/phone";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
 import toast from "react-hot-toast";
@@ -12,7 +12,7 @@ export default function ClientsPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [phone, setPhone] = useState("");
+  const [phoneDigits, setPhoneDigits] = useState("");
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [name, setName] = useState("");
   const [store, setStore] = useState("");
@@ -22,16 +22,16 @@ export default function ClientsPage() {
     queryFn: () => clientsApi.list({ search }),
   });
 
-  const phoneErr = phoneTouched ? phoneError(phone) : null;
-  const canAdd = !phoneError(phone);
+  const phoneErr = phoneTouched ? phoneError(phoneDigits) : null;
+  const canAdd = !phoneError(phoneDigits);
 
   const createMutation = useMutation({
-    mutationFn: () => clientsApi.create({ phone, full_name: name, store_name: store }),
+    mutationFn: () => clientsApi.create({ phone: formatDigits(phoneDigits), full_name: name, store_name: store }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["clients"] });
       toast.success("Клиент добавлен");
       setShowForm(false);
-      setPhone(""); setName(""); setStore(""); setPhoneTouched(false);
+      setPhoneDigits(""); setName(""); setStore(""); setPhoneTouched(false);
     },
   });
 
@@ -53,9 +53,10 @@ export default function ClientsPage() {
             <div>
               <Input
                 label="Телефон *"
-                type="tel"
-                value={phone}
-                onChange={(e) => { setPhone(formatPhoneInput(e.target.value)); setPhoneTouched(true); }}
+                type="text"
+                inputMode="tel"
+                value={formatDigits(phoneDigits)}
+                onChange={(e) => { setPhoneDigits(extractDigits(e.target.value)); setPhoneTouched(true); }}
                 onBlur={() => setPhoneTouched(true)}
                 placeholder="+7 (___) ___-__-__"
               />

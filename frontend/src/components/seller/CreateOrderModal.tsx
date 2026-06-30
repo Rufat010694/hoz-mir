@@ -4,7 +4,7 @@ import { ordersApi } from "@/api/orders";
 import { productsApi } from "@/api/products";
 import { clientsApi } from "@/api/clients";
 import { formatPrice } from "@/utils/format";
-import { formatPhoneInput, phoneError } from "@/utils/phone";
+import { extractDigits, formatDigits, phoneError } from "@/utils/phone";
 import { CartItem, PaymentMethod } from "@/types";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
@@ -14,7 +14,7 @@ import { X, Plus, Minus } from "lucide-react";
 interface Props { onClose: () => void; onSaved: () => void; }
 
 export default function CreateOrderModal({ onClose, onSaved }: Props) {
-  const [clientPhone, setClientPhone] = useState("");
+  const [clientPhoneDigits, setClientPhoneDigits] = useState("");
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [clientName, setClientName] = useState("");
   const [payment, setPayment] = useState<PaymentMethod>("cash");
@@ -45,12 +45,12 @@ export default function CreateOrderModal({ onClose, onSaved }: Props) {
   };
 
   const total = cartItems.reduce((s, i) => s + i.product.price * i.quantity, 0);
-  const phoneErr = phoneTouched ? phoneError(clientPhone) : null;
-  const canSubmit = cartItems.length > 0 && !phoneError(clientPhone);
+  const phoneErr = phoneTouched ? phoneError(clientPhoneDigits) : null;
+  const canSubmit = cartItems.length > 0 && !phoneError(clientPhoneDigits);
 
   const mutation = useMutation({
     mutationFn: () => ordersApi.create({
-      client_phone: clientPhone || undefined,
+      client_phone: formatDigits(clientPhoneDigits) || undefined,
       client_name: clientName || undefined,
       payment_method: payment,
       comment: comment || undefined,
@@ -73,9 +73,10 @@ export default function CreateOrderModal({ onClose, onSaved }: Props) {
             <div>
               <Input
                 label="Телефон клиента *"
-                type="tel"
-                value={clientPhone}
-                onChange={(e) => { setClientPhone(formatPhoneInput(e.target.value)); setPhoneTouched(true); }}
+                type="text"
+                inputMode="tel"
+                value={formatDigits(clientPhoneDigits)}
+                onChange={(e) => { setClientPhoneDigits(extractDigits(e.target.value)); setPhoneTouched(true); }}
                 onBlur={() => setPhoneTouched(true)}
                 placeholder="+7 (___) ___-__-__"
               />

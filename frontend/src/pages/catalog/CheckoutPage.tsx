@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import catalogApi from "@/api/catalog";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice } from "@/utils/format";
-import { formatPhoneInput, phoneError } from "@/utils/phone";
+import { extractDigits, formatDigits, phoneError } from "@/utils/phone";
 import { ArrowLeft, CheckCircle, Clock, Package, Truck } from "lucide-react";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
@@ -21,7 +21,7 @@ export default function CheckoutPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { items, total, clearCart } = useCartStore();
-  const [phone, setPhone] = useState("");
+  const [phoneDigits, setPhoneDigits] = useState("");
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [name, setName] = useState("");
   const [storeName, setStoreName] = useState("");
@@ -49,13 +49,13 @@ export default function CheckoutPage() {
     return () => ws.close();
   }, [orderId]);
 
-  const phoneErr = phoneTouched ? phoneError(phone) : null;
-  const canSubmit = !phoneError(phone) && items.length > 0;
+  const phoneErr = phoneTouched ? phoneError(phoneDigits) : null;
+  const canSubmit = !phoneError(phoneDigits) && items.length > 0;
 
   const mutation = useMutation({
     mutationFn: () =>
       catalogApi.placeOrder(slug!, {
-        client_phone: phone,
+        client_phone: formatDigits(phoneDigits),
         client_name: name || undefined,
         client_store: storeName || undefined,
         payment_method: payment,
@@ -108,10 +108,11 @@ export default function CheckoutPage() {
         <div>
           <Input
             label="Телефон *"
-            type="tel"
-            value={phone}
+            type="text"
+            inputMode="tel"
+            value={formatDigits(phoneDigits)}
             onChange={(e) => {
-              setPhone(formatPhoneInput(e.target.value));
+              setPhoneDigits(extractDigits(e.target.value));
               setPhoneTouched(true);
             }}
             onBlur={() => setPhoneTouched(true)}
