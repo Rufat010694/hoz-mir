@@ -36,6 +36,9 @@ export default function LoginPage() {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Введите логин"
             autoComplete="username"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             required
           />
           <Input
