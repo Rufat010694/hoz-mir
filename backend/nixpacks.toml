@@ -6,4 +6,4 @@ cmds = ["pip install -r requirements.txt"]
 
 [start]
 # Миграции запускаем перед стартом — безопаснее чем в build фазе
-cmd = "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+cmd = "sh -c 'alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT'"
