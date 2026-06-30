@@ -13,7 +13,7 @@ import BulkPriceModal from "@/components/seller/BulkPriceModal";
 export default function ProductsPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showBulkPrice, setShowBulkPrice] = useState(false);
@@ -57,7 +57,7 @@ export default function ProductsPage() {
         <select
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
           value={selectedCategory ?? ""}
-          onChange={(e) => { setSelectedCategory(e.target.value ? Number(e.target.value) : undefined); setPage(0); }}
+          onChange={(e) => { setSelectedCategory(e.target.value || undefined); setPage(0); }}
         >
           <option value="">Все категории</option>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}

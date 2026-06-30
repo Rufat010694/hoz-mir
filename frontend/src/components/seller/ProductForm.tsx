@@ -30,7 +30,7 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
         description: description || undefined,
         price: parseFloat(price),
         stock: parseInt(stock),
-        category_id: categoryId ? parseInt(categoryId) : undefined,
+        category_id: categoryId || undefined,
         is_active: isActive,
       };
       if (product) return productsApi.update(product.id, payload);

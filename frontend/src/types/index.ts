@@ -16,11 +16,15 @@ export interface TokenResponse {
   token_type: string;
 }
 
+// CockroachDB generates 64-bit IDs that exceed JS MAX_SAFE_INTEGER.
+// The backend serialises them as strings; keep them as string | number throughout.
+export type DbId = string | number;
+
 // ── Product ───────────────────────────────────────────────────────────────────
 export interface Category {
-  id: number;
+  id: DbId;
   name: string;
-  parent_id: number | null;
+  parent_id: DbId | null;
   sort_order: number;
 }
 
@@ -32,12 +36,12 @@ export interface ProductPhoto {
 }
 
 export interface Product {
-  id: number;
+  id: DbId;
   name: string;
   description: string | null;
   price: number;
   stock: number;
-  category_id: number | null;
+  category_id: DbId | null;
   is_active: boolean;
   photos: ProductPhoto[];
   created_at: string;
@@ -49,8 +53,8 @@ export type OrderStatus = "new" | "processing" | "ready" | "delivered" | "cancel
 export type PaymentMethod = "cash" | "transfer" | "debt" | "other";
 
 export interface OrderItem {
-  id: number;
-  product_id: number | null;
+  id: DbId;
+  product_id: DbId | null;
   product_name: string;
   price: number;
   quantity: number;
@@ -58,8 +62,8 @@ export interface OrderItem {
 }
 
 export interface Order {
-  id: number;
-  client_id: number | null;
+  id: DbId;
+  client_id: DbId | null;
   client_phone: string | null;
   client_name: string | null;
   client_store: string | null;
@@ -74,8 +78,8 @@ export interface Order {
 }
 
 export interface OrderListItem {
-  id: number;
-  client_id: number | null;
+  id: DbId;
+  client_id: DbId | null;
   client_name: string | null;
   client_phone: string | null;
   status: OrderStatus;
@@ -86,7 +90,7 @@ export interface OrderListItem {
 
 // ── Client ────────────────────────────────────────────────────────────────────
 export interface Client {
-  id: number;
+  id: DbId;
   phone: string;
   full_name: string | null;
   store_name: string | null;
@@ -108,7 +112,7 @@ export interface DashboardData {
   new_orders: number;
   today_revenue: number;
   recent_orders: Array<{
-    id: number;
+    id: DbId;
     client_name: string | null;
     total_amount: number;
     status: OrderStatus;

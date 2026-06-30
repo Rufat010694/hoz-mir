@@ -2,12 +2,12 @@ import api from "./index";
 import { Category, Product } from "@/types";
 
 export const productsApi = {
-  list: async (params?: { search?: string; category_id?: number; is_active?: boolean; skip?: number; limit?: number }) => {
+  list: async (params?: { search?: string; category_id?: string | number; is_active?: boolean; skip?: number; limit?: number }) => {
     const { data } = await api.get<Product[]>("/products", { params });
     return data;
   },
 
-  get: async (id: number) => {
+  get: async (id: string | number) => {
     const { data } = await api.get<Product>(`/products/${id}`);
     return data;
   },
@@ -17,28 +17,28 @@ export const productsApi = {
     return data;
   },
 
-  update: async (id: number, payload: Partial<Product>) => {
+  update: async (id: string | number, payload: Partial<Product>) => {
     const { data } = await api.patch<Product>(`/products/${id}`, payload);
     return data;
   },
 
-  delete: async (id: number) => {
+  delete: async (id: string | number) => {
     await api.delete(`/products/${id}`);
   },
 
-  uploadPhoto: async (id: number, file: File) => {
+  uploadPhoto: async (id: string | number, file: File) => {
     const form = new FormData();
     form.append("file", file);
     const { data } = await api.post<Product>(`/products/${id}/photos`, form);
     return data;
   },
 
-  deletePhoto: async (id: number, index: number) => {
+  deletePhoto: async (id: string | number, index: number) => {
     const { data } = await api.delete<Product>(`/products/${id}/photos/${index}`);
     return data;
   },
 
-  bulkPrice: async (payload: { product_ids?: number[]; action: string; value: number }) => {
+  bulkPrice: async (payload: { product_ids?: (string | number)[]; action: string; value: number }) => {
     const { data } = await api.post<{ updated: number }>("/products/bulk/price", payload);
     return data;
   },
@@ -53,12 +53,12 @@ export const productsApi = {
     return data;
   },
 
-  createCategory: async (payload: { name: string; parent_id?: number; sort_order?: number }) => {
+  createCategory: async (payload: { name: string; parent_id?: string | number; sort_order?: number }) => {
     const { data } = await api.post<Category>("/products/categories", payload);
     return data;
   },
 
-  deleteCategory: async (id: number) => {
+  deleteCategory: async (id: string | number) => {
     await api.delete(`/products/categories/${id}`);
   },
 };

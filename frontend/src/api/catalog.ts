@@ -26,7 +26,7 @@ const catalogApi = {
       client_store?: string;
       payment_method: string;
       comment?: string;
-      items: Array<{ product_id: number; quantity: number }>;
+      items: Array<{ product_id: string | number; quantity: number }>;
     }
   ) => {
     const { data } = await axios.post<{ order_id: number; total: number; message: string }>(
