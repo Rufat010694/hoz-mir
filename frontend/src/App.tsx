@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, MutationCache, QueryCache } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 
@@ -24,8 +25,27 @@ import CatalogPage from "@/pages/catalog/CatalogPage";
 import ProductPage from "@/pages/catalog/ProductPage";
 import CartPage from "@/pages/catalog/CartPage";
 import CheckoutPage from "@/pages/catalog/CheckoutPage";
+import TrackPage from "@/pages/catalog/TrackPage";
 
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error: any, query) => {
+      // Only show error toast if we already have data (background refetch failed)
+      if (query.state.data !== undefined) {
+        const msg = error?.response?.data?.detail || error?.message || "Ошибка загрузки данных";
+        toast.error(msg);
+      }
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error: any, _vars, _ctx, mutation) => {
+      // Show toast only if mutation doesn't define its own onError
+      if (!mutation.options.onError) {
+        const msg = error?.response?.data?.detail || error?.message || "Ошибка выполнения операции";
+        toast.error(msg);
+      }
+    },
+  }),
   defaultOptions: {
     queries: { retry: 1, staleTime: 30_000 },
   },
@@ -69,6 +89,7 @@ export default function App() {
               <Route path="product/:productId" element={<ProductPage />} />
               <Route path="cart" element={<CartPage />} />
               <Route path="checkout" element={<CheckoutPage />} />
+              <Route path="track" element={<TrackPage />} />
             </Route>
 
             {/* Redirect root */}

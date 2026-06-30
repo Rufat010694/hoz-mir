@@ -90,6 +90,42 @@ async def get_catalog_categories(slug: str, db: AsyncSession = Depends(get_db)):
     return categories
 
 
+@router.get("/{slug}/track/{order_number}")
+async def track_order(slug: str, order_number: int, phone: str = Query(...), db: AsyncSession = Depends(get_db)):
+    ur = await db.execute(select(User).where(User.catalog_slug == slug, User.is_active == True))
+    seller = ur.scalar_one_or_none()
+    if not seller:
+        raise HTTPException(404, "Store not found")
+
+    from app.models.order import OrderItem as OI
+    res = await db.execute(
+        select(Order).where(
+            Order.user_id == seller.id,
+            Order.order_number == order_number,
+            Order.client_phone == phone,
+        )
+    )
+    order = res.scalar_one_or_none()
+    if not order:
+        raise HTTPException(404, "Заказ не найден. Проверьте номер и телефон.")
+
+    items_res = await db.execute(select(OI).where(OI.order_id == order.id))
+    items = items_res.scalars().all()
+
+    return {
+        "order_number": order.order_number,
+        "status": order.status,
+        "total_amount": float(order.total_amount),
+        "payment_method": order.payment_method,
+        "comment": order.comment,
+        "created_at": order.created_at.isoformat(),
+        "items": [
+            {"product_name": i.product_name, "quantity": i.quantity, "price": float(i.price), "subtotal": float(i.subtotal)}
+            for i in items
+        ],
+    }
+
+
 @router.post("/{slug}/orders", response_model=dict, status_code=201)
 async def place_catalog_order(
     slug: str,

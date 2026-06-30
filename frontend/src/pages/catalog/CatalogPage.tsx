@@ -41,14 +41,19 @@ export default function CatalogPage() {
             <img src="/logo.png" alt="Хоз Мир" className="h-20 object-contain" />
             <h1 className="text-lg font-bold text-gray-800">{store?.store_name || "Каталог"}</h1>
           </div>
-          <Link to={`/catalog/${slug}/cart`} className="relative">
-            <ShoppingCart size={24} className="text-gray-700" />
-            {itemCount() > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-primary-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                {itemCount()}
-              </span>
-            )}
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to={`/catalog/${slug}/track`} className="text-xs text-gray-400 hover:text-primary-600">
+              Мой заказ
+            </Link>
+            <Link to={`/catalog/${slug}/cart`} className="relative">
+              <ShoppingCart size={24} className="text-gray-700" />
+              {itemCount() > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-primary-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                  {itemCount()}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />

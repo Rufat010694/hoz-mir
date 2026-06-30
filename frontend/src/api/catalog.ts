@@ -18,6 +18,19 @@ const catalogApi = {
     return data;
   },
 
+  trackOrder: async (slug: string, orderNumber: number, phone: string) => {
+    const { data } = await axios.get(`/api/catalog/${slug}/track/${orderNumber}`, { params: { phone } });
+    return data as {
+      order_number: number;
+      status: string;
+      total_amount: number;
+      payment_method: string;
+      comment: string | null;
+      created_at: string;
+      items: Array<{ product_name: string; quantity: number; price: number; subtotal: number }>;
+    };
+  },
+
   placeOrder: async (
     slug: string,
     payload: {

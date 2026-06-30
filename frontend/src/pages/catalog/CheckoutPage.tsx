@@ -90,7 +90,13 @@ export default function CheckoutPage() {
             </div>
           ))}
         </div>
-        <Button onClick={() => navigate(`/catalog/${slug}`)}>Вернуться в каталог</Button>
+        <div className="flex flex-col gap-2 w-full max-w-xs">
+          <Button onClick={() => navigate(`/catalog/${slug}/track`)}>Отследить заказ</Button>
+          <Button variant="secondary" onClick={() => navigate(`/catalog/${slug}`)}>Вернуться в каталог</Button>
+        </div>
+        <p className="text-xs text-gray-400 mt-4">
+          Для отслеживания используй номер заказа <strong>#{orderNumber}</strong> и свой телефон
+        </p>
       </div>
     );
   }

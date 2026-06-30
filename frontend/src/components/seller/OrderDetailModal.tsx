@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { OrderStatus, PaymentMethod } from "@/types";
 import toast from "react-hot-toast";
-import { X } from "lucide-react";
+import { X, Printer } from "lucide-react";
 
 const STATUS_NEXT: Record<OrderStatus, OrderStatus | null> = {
   new: "processing",
@@ -47,6 +47,41 @@ export default function OrderDetailModal({ orderId, onClose, onUpdated }: Props)
     statusMutation.mutate(status);
   };
 
+  const printInvoice = () => {
+    if (!order) return;
+    const storeName = (window as any).__STORE_NAME__ || "Магазин";
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Счёт #${order.order_number ?? order.id}</title>
+<style>
+  body{font-family:Arial,sans-serif;padding:24px;color:#111;font-size:14px}
+  h1{font-size:20px;margin-bottom:4px}
+  .meta{color:#555;font-size:12px;margin-bottom:20px}
+  table{width:100%;border-collapse:collapse;margin-bottom:16px}
+  th{text-align:left;border-bottom:2px solid #111;padding:6px 4px;font-size:12px}
+  td{padding:6px 4px;border-bottom:1px solid #eee}
+  .total{font-weight:bold;font-size:16px;text-align:right}
+  .footer{margin-top:24px;font-size:11px;color:#888}
+  @media print{body{padding:0}}
+</style></head><body>
+<h1>Счёт-фактура #${order.order_number ?? order.id}</h1>
+<div class="meta">
+  Дата: ${new Date(order.created_at).toLocaleString("ru")}<br/>
+  Клиент: ${order.client_name || "—"} | Тел: ${order.client_phone || "—"}${order.client_store ? ` | Магазин: ${order.client_store}` : ""}<br/>
+  Оплата: ${PAYMENT_LABELS[order.payment_method as keyof typeof PAYMENT_LABELS] ?? order.payment_method}
+</div>
+<table>
+  <thead><tr><th>Товар</th><th>Цена</th><th>Кол-во</th><th style="text-align:right">Сумма</th></tr></thead>
+  <tbody>
+    ${order.items.map(i => `<tr><td>${i.product_name}</td><td>${formatPrice(i.price)}</td><td>${i.quantity}</td><td style="text-align:right">${formatPrice(i.subtotal)}</td></tr>`).join("")}
+  </tbody>
+</table>
+<div class="total">Итого: ${formatPrice(order.total_amount)}</div>
+${order.comment ? `<p style="color:#555;font-size:12px;margin-top:12px">Комментарий: ${order.comment}</p>` : ""}
+<div class="footer">Документ сформирован автоматически · ${storeName}</div>
+</body></html>`;
+    const w = window.open("", "_blank", "width=700,height=600");
+    if (w) { w.document.write(html); w.document.close(); w.focus(); w.print(); }
+  };
+
   if (isLoading || !order) return null;
   const nextStatus = STATUS_NEXT[order.status];
 
@@ -58,7 +93,12 @@ export default function OrderDetailModal({ orderId, onClose, onUpdated }: Props)
             <h3 className="font-semibold text-gray-800">Заказ #{order.order_number ?? order.id}</h3>
             <StatusBadge status={order.status} />
           </div>
-          <button onClick={onClose}><X size={20} className="text-gray-400" /></button>
+          <div className="flex items-center gap-2">
+            <button onClick={printInvoice} title="Распечатать счёт" className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg">
+              <Printer size={18} />
+            </button>
+            <button onClick={onClose}><X size={20} className="text-gray-400" /></button>
+          </div>
         </div>
 
         <div className="p-4 space-y-4">
