@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import catalogApi from "@/api/catalog";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice } from "@/utils/format";
-import { ShoppingCart, Search, MapPin, Camera, LayoutGrid, Heart, Package, User } from "lucide-react";
+import { ShoppingCart, Search, MapPin, Camera, Package } from "lucide-react";
 
 const FONT = "'Poppins', sans-serif";
 const GREEN = "#16A34A";
@@ -165,7 +165,7 @@ export default function CatalogPage() {
       {/* ── PRODUCT GRID ──────────────────────── */}
       <div style={{
         display: "grid", gridTemplateColumns: "1fr 1fr",
-        gap: 12, padding: "12px 12px 90px",
+        gap: 10, padding: "10px 10px 20px",
       }}>
         {isLoading
           ? Array.from({ length: 6 }).map((_, i) => (
@@ -209,36 +209,36 @@ export default function CatalogPage() {
                     src={p.photos[0].thumbnail_url}
                     alt={p.name}
                     style={{
-                      width: "100%", aspectRatio: "1/1",
+                      width: "100%", aspectRatio: "4/3",
                       objectFit: "cover",
-                      borderRadius: "16px 16px 0 0",
+                      borderRadius: "14px 14px 0 0",
                       display: "block",
                     }}
                     loading="lazy"
                   />
                 ) : (
                   <div style={{
-                    width: "100%", aspectRatio: "1/1",
+                    width: "100%", aspectRatio: "4/3",
                     background: "#F3F4F6",
-                    borderRadius: "16px 16px 0 0",
+                    borderRadius: "14px 14px 0 0",
                     display: "flex", flexDirection: "column",
                     alignItems: "center", justifyContent: "center",
-                    gap: 6,
+                    gap: 4,
                   }}>
-                    <Camera size={32} color="#D1D5DB" />
-                    <span style={{ fontSize: 11, color: "#9CA3AF", fontFamily: FONT }}>Фото скоро появится</span>
+                    <Camera size={24} color="#D1D5DB" />
+                    <span style={{ fontSize: 10, color: "#9CA3AF", fontFamily: FONT }}>Фото скоро появится</span>
                   </div>
                 )}
 
                 {/* Info */}
-                <div style={{ padding: 12, flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+                <div style={{ padding: 10, flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
                   {/* Article */}
-                  <p style={{ fontSize: 12, color: GRAY, fontFamily: FONT, margin: 0 }}>
+                  <p style={{ fontSize: 11, color: GRAY, fontFamily: FONT, margin: 0 }}>
                     Арт. {String(p.id).slice(-6).padStart(6, "0")}
                   </p>
                   {/* Name */}
                   <p style={{
-                    fontSize: 15, fontWeight: 600, color: DARK,
+                    fontSize: 13, fontWeight: 600, color: DARK,
                     fontFamily: FONT, margin: 0,
                     display: "-webkit-box", WebkitLineClamp: 2,
                     WebkitBoxOrient: "vertical", overflow: "hidden",
@@ -248,8 +248,8 @@ export default function CatalogPage() {
                   </p>
                   {/* Price */}
                   <p style={{
-                    fontSize: 18, fontWeight: 600, color: GREEN,
-                    fontFamily: FONT, margin: "4px 0 8px",
+                    fontSize: 15, fontWeight: 600, color: GREEN,
+                    fontFamily: FONT, margin: "3px 0 6px",
                   }}>
                     {formatPrice(p.price)}
                   </p>
@@ -262,13 +262,13 @@ export default function CatalogPage() {
                     }}
                     disabled={outOfStock}
                     style={{
-                      width: "100%", height: 40,
-                      borderRadius: 24, border: "none",
+                      width: "100%", height: 36,
+                      borderRadius: 18, border: "none",
                       background: outOfStock ? "#E5E7EB" : GREEN,
                       color: outOfStock ? GRAY : "#fff",
-                      fontSize: 13, fontWeight: 500, fontFamily: FONT,
+                      fontSize: 12, fontWeight: 500, fontFamily: FONT,
                       cursor: outOfStock ? "not-allowed" : "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                       marginTop: "auto",
                     }}
                   >
@@ -276,7 +276,7 @@ export default function CatalogPage() {
                       "Нет в наличии"
                     ) : (
                       <>
-                        <ShoppingCart size={14} />
+                        <ShoppingCart size={13} />
                         В корзину
                       </>
                     )}
@@ -288,54 +288,6 @@ export default function CatalogPage() {
         }
       </div>
 
-      {/* ── BOTTOM NAV ──────────────────────── */}
-      <div style={{
-        position: "fixed", bottom: 0, left: "50%",
-        transform: "translateX(-50%)",
-        width: "100%", maxWidth: 480,
-        background: "#fff",
-        boxShadow: "0 -1px 0 #E5E7EB",
-        display: "flex",
-        zIndex: 40,
-      }}>
-        {[
-          { icon: <LayoutGrid size={24} />, label: "Каталог", to: `/catalog/${slug}`, active: true },
-          { icon: <Heart size={24} />, label: "Избранное", to: null, active: false },
-          { icon: <Package size={24} />, label: "Заказы", to: `/catalog/${slug}/track`, active: false },
-          { icon: <User size={24} />, label: "Профиль", to: null, active: false },
-        ].map((item, i) => (
-          item.to ? (
-            <Link
-              key={i}
-              to={item.to}
-              style={{
-                flex: 1, display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center",
-                padding: "10px 0 8px", textDecoration: "none",
-                color: item.active ? GREEN : "#9CA3AF",
-                fontSize: 11, fontFamily: FONT, fontWeight: 500, gap: 3,
-              }}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          ) : (
-            <div
-              key={i}
-              style={{
-                flex: 1, display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center",
-                padding: "10px 0 8px",
-                color: "#9CA3AF",
-                fontSize: 11, fontFamily: FONT, fontWeight: 500, gap: 3,
-              }}
-            >
-              {item.icon}
-              {item.label}
-            </div>
-          )
-        ))}
-      </div>
 
     </div>
   );
