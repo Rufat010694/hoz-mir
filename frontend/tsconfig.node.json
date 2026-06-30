@@ -9,7 +9,7 @@
     "allowImportingTsExtensions": false,
     "noEmit": false,
     "strict": true,
-    "types": ["node"]
+    "types": []
   },
   "include": ["vite.config.ts"]
 }
