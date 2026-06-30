@@ -86,61 +86,59 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Add user — admin only */}
-        {user?.role === "admin" && (
-          <div className="bg-white rounded-xl border border-gray-100 p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <UserPlus size={16} className="text-primary-600" />
-              <h3 className="font-semibold text-gray-700">Добавить пользователя</h3>
-            </div>
-            <div className="space-y-3">
-              <Input
-                label="Логин"
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                placeholder="login123"
-              />
-              <Input
-                label="Пароль"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Минимум 4 символа"
-              />
-              <Input
-                label="ФИО (необязательно)"
-                value={newFullName}
-                onChange={(e) => setNewFullName(e.target.value)}
-                placeholder="Иванов Иван"
-              />
-              <Input
-                label="Название магазина (необязательно)"
-                value={newStore}
-                onChange={(e) => setNewStore(e.target.value)}
-                placeholder="Мой магазин"
-              />
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">Роль</label>
-                <select
-                  value={newRole}
-                  onChange={(e) => setNewRole(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="seller">Продавец</option>
-                  <option value="admin">Администратор</option>
-                </select>
-              </div>
-              <Button
-                size="sm"
-                loading={createUserMutation.isPending}
-                disabled={!canCreate}
-                onClick={() => createUserMutation.mutate()}
-              >
-                Создать
-              </Button>
-            </div>
+        {/* Add user */}
+        <div className="bg-white rounded-xl border border-gray-100 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <UserPlus size={16} className="text-primary-600" />
+            <h3 className="font-semibold text-gray-700">Добавить пользователя</h3>
           </div>
-        )}
+          <div className="space-y-3">
+            <Input
+              label="Логин"
+              value={newUsername}
+              onChange={(e) => setNewUsername(e.target.value)}
+              placeholder="login123"
+            />
+            <Input
+              label="Пароль"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Минимум 4 символа"
+            />
+            <Input
+              label="ФИО (необязательно)"
+              value={newFullName}
+              onChange={(e) => setNewFullName(e.target.value)}
+              placeholder="Иванов Иван"
+            />
+            <Input
+              label="Название магазина (необязательно)"
+              value={newStore}
+              onChange={(e) => setNewStore(e.target.value)}
+              placeholder="Мой магазин"
+            />
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Роль</label>
+              <select
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="seller">Продавец</option>
+                <option value="admin">Администратор</option>
+              </select>
+            </div>
+            <Button
+              size="sm"
+              loading={createUserMutation.isPending}
+              disabled={!canCreate}
+              onClick={() => createUserMutation.mutate()}
+            >
+              Создать
+            </Button>
+          </div>
+        </div>
 
         {/* Logout */}
         <div className="bg-white rounded-xl border border-gray-100 p-4">
