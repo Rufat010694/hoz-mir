@@ -35,7 +35,10 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!orderId) return;
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${proto}://${window.location.host}/api/ws/order/${orderId}`);
+    const apiHost = import.meta.env.VITE_API_URL
+      ? import.meta.env.VITE_API_URL.replace(/^https?:\/\//, "")
+      : window.location.host;
+    const ws = new WebSocket(`${proto}://${apiHost}/ws/order/${orderId}`);
     wsRef.current = ws;
     ws.onmessage = (e) => {
       try {
