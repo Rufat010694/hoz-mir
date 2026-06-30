@@ -4,12 +4,13 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import clsx from "clsx";
 import {
   LayoutDashboard, Package, ShoppingCart, Users, BarChart2,
-  Settings, LogOut, Share2,
+  Settings, LogOut, Share2, Tag,
 } from "lucide-react";
 
 const navItems = [
   { to: "/seller", label: "Главная", icon: LayoutDashboard, exact: true },
   { to: "/seller/products", label: "Товары", icon: Package },
+  { to: "/seller/categories", label: "Категории", icon: Tag },
   { to: "/seller/orders", label: "Заказы", icon: ShoppingCart },
   { to: "/seller/clients", label: "Клиенты", icon: Users },
   { to: "/seller/catalog-share", label: "Мой каталог", icon: Share2 },
@@ -29,20 +30,18 @@ export default function SellerLayout() {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="hidden md:flex w-56 flex-col bg-white border-r border-gray-200 py-4">
-        <div className="px-4 mb-6">
-          <h1 className="text-lg font-bold text-primary-700">
-            {user?.store_name || "Мой Магазин"}
-          </h1>
+      <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-200 py-4">
+        <div className="px-3 mb-1">
+          <img src="/logo.png" alt="Хоз Мир" className="w-full object-contain" />
         </div>
 
-        <nav className="flex-1 px-2 space-y-1">
+        <nav className="flex-1 px-2 space-y-0.5">
           {navItems.map(({ to, label, icon: Icon, exact }) => (
             <Link
               key={to}
               to={to}
               className={clsx(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                "flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-colors",
                 isActive(to, exact)
                   ? "bg-primary-50 text-primary-700 font-medium"
                   : "text-gray-600 hover:bg-gray-100"

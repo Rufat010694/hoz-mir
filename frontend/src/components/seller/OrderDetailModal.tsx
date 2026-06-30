@@ -31,12 +31,21 @@ export default function OrderDetailModal({ orderId, onClose, onUpdated }: Props)
   const statusMutation = useMutation({
     mutationFn: (status: OrderStatus) => ordersApi.updateStatus(orderId, status),
     onSuccess: () => { toast.success("Статус обновлён"); onUpdated(); },
+    onError: () => toast.error("Ошибка смены статуса"),
   });
 
   const paymentMutation = useMutation({
     mutationFn: (pm: PaymentMethod) => ordersApi.updatePayment(orderId, pm),
     onSuccess: () => { toast.success("Оплата обновлена"); onUpdated(); },
+    onError: () => toast.error("Ошибка смены оплаты"),
   });
+
+  const isBusy = statusMutation.isPending || paymentMutation.isPending;
+
+  const changeStatus = (status: OrderStatus) => {
+    onClose(); // закрываем сразу, не ждём ответа
+    statusMutation.mutate(status);
+  };
 
   if (isLoading || !order) return null;
   const nextStatus = STATUS_NEXT[order.status];
@@ -94,8 +103,8 @@ export default function OrderDetailModal({ orderId, onClose, onUpdated }: Props)
               <Button
                 variant="danger"
                 size="sm"
-                onClick={() => statusMutation.mutate("cancelled")}
-                loading={statusMutation.isPending}
+                onClick={() => changeStatus("cancelled")}
+                disabled={isBusy}
               >
                 Отменить
               </Button>
@@ -103,8 +112,8 @@ export default function OrderDetailModal({ orderId, onClose, onUpdated }: Props)
             {nextStatus && STATUS_NEXT_LABEL[order.status] && (
               <Button
                 className="flex-1"
-                onClick={() => statusMutation.mutate(nextStatus)}
-                loading={statusMutation.isPending}
+                onClick={() => changeStatus(nextStatus)}
+                disabled={isBusy}
               >
                 → {STATUS_NEXT_LABEL[order.status]}
               </Button>

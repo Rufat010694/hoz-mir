@@ -17,6 +17,7 @@ import ClientsPage from "@/pages/seller/ClientsPage";
 import ReportsPage from "@/pages/seller/ReportsPage";
 import SettingsPage from "@/pages/seller/SettingsPage";
 import CatalogSharePage from "@/pages/seller/CatalogSharePage";
+import CategoriesPage from "@/pages/seller/CategoriesPage";
 
 // Catalog pages
 import CatalogPage from "@/pages/catalog/CatalogPage";
@@ -57,6 +58,7 @@ export default function App() {
               <Route path="orders" element={<OrdersPage />} />
               <Route path="clients" element={<ClientsPage />} />
               <Route path="catalog-share" element={<CatalogSharePage />} />
+              <Route path="categories" element={<CategoriesPage />} />
               <Route path="reports" element={<ReportsPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>

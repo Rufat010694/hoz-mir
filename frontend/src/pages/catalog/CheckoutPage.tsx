@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import catalogApi from "@/api/catalog";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice } from "@/utils/format";
+import { formatPhoneInput, phoneError } from "@/utils/phone";
 import { ArrowLeft, CheckCircle } from "lucide-react";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
@@ -13,12 +14,16 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const { items, total, clearCart } = useCartStore();
   const [phone, setPhone] = useState("");
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [name, setName] = useState("");
   const [storeName, setStoreName] = useState("");
   const [payment, setPayment] = useState("cash");
   const [comment, setComment] = useState("");
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState<number | null>(null);
+
+  const phoneErr = phoneTouched ? phoneError(phone) : null;
+  const canSubmit = !phoneError(phone) && items.length > 0;
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -61,14 +66,21 @@ export default function CheckoutPage() {
         {/* Store name (optional) */}
         <Input label="Название магазина (если нужно)" value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Название вашего магазина" />
         <Input label="ФИО" value={name} onChange={(e) => setName(e.target.value)} placeholder="Введите ваше ФИО" />
-        <Input
-          label="Телефон *"
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="+7 (___) ___-__-__"
-          required
-        />
+        <div>
+          <Input
+            label="Телефон *"
+            type="tel"
+            value={phone}
+            onChange={(e) => {
+              setPhone(formatPhoneInput(e.target.value));
+              setPhoneTouched(true);
+            }}
+            onBlur={() => setPhoneTouched(true)}
+            placeholder="+7 (___) ___-__-__"
+            required
+          />
+          {phoneErr && <p className="mt-1 text-xs text-red-500">{phoneErr}</p>}
+        </div>
 
         {/* Payment */}
         <div className="flex flex-col gap-2">
@@ -105,8 +117,8 @@ export default function CheckoutPage() {
           className="w-full"
           size="lg"
           loading={mutation.isPending}
-          disabled={!phone}
-          onClick={() => mutation.mutate()}
+          disabled={!canSubmit}
+          onClick={() => { setPhoneTouched(true); if (canSubmit) mutation.mutate(); }}
         >
           Отправить заказ
         </Button>

@@ -37,7 +37,10 @@ export default function CatalogPage() {
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-gray-100 z-30 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-lg font-bold text-gray-800">{store?.store_name || "Каталог"}</h1>
+          <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="Хоз Мир" className="h-20 object-contain" />
+            <h1 className="text-lg font-bold text-gray-800">{store?.store_name || "Каталог"}</h1>
+          </div>
           <Link to={`/catalog/${slug}/cart`} className="relative">
             <ShoppingCart size={24} className="text-gray-700" />
             {itemCount() > 0 && (

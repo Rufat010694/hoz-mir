@@ -4,6 +4,7 @@ import { ordersApi } from "@/api/orders";
 import { productsApi } from "@/api/products";
 import { clientsApi } from "@/api/clients";
 import { formatPrice } from "@/utils/format";
+import { formatPhoneInput, phoneError } from "@/utils/phone";
 import { CartItem, PaymentMethod } from "@/types";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
@@ -14,6 +15,7 @@ interface Props { onClose: () => void; onSaved: () => void; }
 
 export default function CreateOrderModal({ onClose, onSaved }: Props) {
   const [clientPhone, setClientPhone] = useState("");
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [clientName, setClientName] = useState("");
   const [payment, setPayment] = useState<PaymentMethod>("cash");
   const [comment, setComment] = useState("");
@@ -43,6 +45,8 @@ export default function CreateOrderModal({ onClose, onSaved }: Props) {
   };
 
   const total = cartItems.reduce((s, i) => s + i.product.price * i.quantity, 0);
+  const phoneErr = phoneTouched ? phoneError(clientPhone) : null;
+  const canSubmit = cartItems.length > 0 && !phoneError(clientPhone);
 
   const mutation = useMutation({
     mutationFn: () => ordersApi.create({
@@ -66,7 +70,17 @@ export default function CreateOrderModal({ onClose, onSaved }: Props) {
         </div>
         <div className="p-4 space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Телефон клиента" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} placeholder="+7..." />
+            <div>
+              <Input
+                label="Телефон клиента *"
+                type="tel"
+                value={clientPhone}
+                onChange={(e) => { setClientPhone(formatPhoneInput(e.target.value)); setPhoneTouched(true); }}
+                onBlur={() => setPhoneTouched(true)}
+                placeholder="+7 (___) ___-__-__"
+              />
+              {phoneErr && <p className="mt-1 text-xs text-red-500">{phoneErr}</p>}
+            </div>
             <Input label="Имя клиента" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Необязательно" />
           </div>
 
@@ -135,8 +149,8 @@ export default function CreateOrderModal({ onClose, onSaved }: Props) {
             <Button
               className="flex-1"
               loading={mutation.isPending}
-              disabled={cartItems.length === 0}
-              onClick={() => mutation.mutate()}
+              disabled={!canSubmit}
+              onClick={() => { setPhoneTouched(true); if (canSubmit) mutation.mutate(); }}
             >
               Создать заказ
             </Button>

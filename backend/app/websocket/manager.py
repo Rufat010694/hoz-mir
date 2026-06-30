@@ -35,12 +35,17 @@ async def broadcast_to_user(user_id: int, event: str, data: dict):
 
 
 async def publish_event(user_id: int, event: str, data: dict):
-    """Publish via Redis Pub/Sub for multi-instance support."""
-    r = aioredis.from_url(settings.REDIS_URL)
-    channel = f"user:{user_id}"
-    payload = json.dumps({"event": event, "data": data})
-    await r.publish(channel, payload)
-    await r.aclose()
+    """Publish via Redis Pub/Sub for multi-instance support.
+    Falls back to direct broadcast if Redis is unavailable."""
+    try:
+        r = aioredis.from_url(settings.REDIS_URL)
+        channel = f"user:{user_id}"
+        payload = json.dumps({"event": event, "data": data})
+        await r.publish(channel, payload)
+        await r.aclose()
+    except Exception:
+        # Redis not available — send directly to connected WebSockets
+        await broadcast_to_user(user_id, event, data)
 
 
 async def subscribe_and_forward(user_id: int, ws: WebSocket):

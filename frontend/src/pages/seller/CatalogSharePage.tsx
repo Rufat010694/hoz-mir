@@ -80,9 +80,7 @@ export default function CatalogSharePage() {
 
           {/* Store name */}
           <div className="bg-primary-50 border border-primary-100 rounded-xl p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center font-bold text-lg">
-              {storeName[0]}
-            </div>
+            <img src="/logo.png" alt="Хоз Мир" className="h-24 object-contain" />
             <div>
               <p className="font-semibold text-primary-800">{storeName}</p>
               <p className="text-xs text-primary-500">{catalogUrl}</p>
