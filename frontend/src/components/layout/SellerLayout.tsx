@@ -4,7 +4,7 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import clsx from "clsx";
 import {
   LayoutDashboard, Package, ShoppingCart, Users, BarChart2,
-  Settings, LogOut, Share2, Tag,
+  Settings, LogOut, Share2, Tag, Menu,
 } from "lucide-react";
 
 const navItems = [
@@ -70,7 +70,7 @@ export default function SellerLayout() {
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-2 z-40">
-        {navItems.slice(0, 5).map(({ to, label, icon: Icon, exact }) => (
+        {navItems.slice(0, 4).map(({ to, label, icon: Icon, exact }) => (
           <Link
             key={to}
             to={to}
@@ -83,6 +83,16 @@ export default function SellerLayout() {
             {label}
           </Link>
         ))}
+        <Link
+          to="/seller/settings"
+          className={clsx(
+            "flex flex-col items-center gap-0.5 text-xs px-2 py-1",
+            isActive("/seller/settings") ? "text-primary-600" : "text-gray-500"
+          )}
+        >
+          <Settings size={20} />
+          Ещё
+        </Link>
       </nav>
     </div>
   );
