@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from decimal import Decimal
 from datetime import datetime
 
@@ -17,7 +17,7 @@ class ClientUpdate(BaseModel):
 
 
 class ClientResponse(BaseModel):
-    id: int
+    id: str
     phone: str
     full_name: str | None
     store_name: str | None
@@ -26,3 +26,8 @@ class ClientResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def to_str(cls, v):
+        return str(v) if v is not None else None

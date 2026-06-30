@@ -1,21 +1,26 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from decimal import Decimal
 from datetime import datetime
 
 
 class CategoryCreate(BaseModel):
     name: str
-    parent_id: int | None = None
+    parent_id: int | str | None = None
     sort_order: int = 0
 
 
 class CategoryResponse(BaseModel):
-    id: int
+    id: str
     name: str
-    parent_id: int | None
+    parent_id: str | None
     sort_order: int
 
     model_config = {"from_attributes": True}
+
+    @field_validator("id", "parent_id", mode="before")
+    @classmethod
+    def to_str(cls, v):
+        return str(v) if v is not None else None
 
 
 class ProductCreate(BaseModel):
@@ -23,8 +28,13 @@ class ProductCreate(BaseModel):
     description: str | None = None
     price: Decimal
     stock: int = 0
-    category_id: int | None = None
+    category_id: int | str | None = None
     is_active: bool = True
+
+    @field_validator("category_id", mode="before")
+    @classmethod
+    def coerce_category(cls, v):
+        return int(v) if v is not None else None
 
 
 class ProductUpdate(BaseModel):
@@ -32,17 +42,22 @@ class ProductUpdate(BaseModel):
     description: str | None = None
     price: Decimal | None = None
     stock: int | None = None
-    category_id: int | None = None
+    category_id: int | str | None = None
     is_active: bool | None = None
+
+    @field_validator("category_id", mode="before")
+    @classmethod
+    def coerce_category(cls, v):
+        return int(v) if v is not None else None
 
 
 class ProductResponse(BaseModel):
-    id: int
+    id: str
     name: str
     description: str | None
     price: Decimal
     stock: int
-    category_id: int | None
+    category_id: str | None
     is_active: bool
     photos: list
     created_at: datetime
@@ -50,9 +65,14 @@ class ProductResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+    @field_validator("id", "category_id", mode="before")
+    @classmethod
+    def to_str(cls, v):
+        return str(v) if v is not None else None
+
 
 class BulkPriceUpdate(BaseModel):
-    product_ids: list[int] | None = None  # None = all products
+    product_ids: list[int | str] | None = None  # None = all products
     action: str  # "percent" | "fixed"
     value: Decimal
 

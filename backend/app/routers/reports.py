@@ -89,7 +89,7 @@ async def get_dashboard(
         "today_revenue": float(today_revenue.scalar() or 0),
         "recent_orders": [
             {
-                "id": o.id,
+                "id": str(o.id),
                 "client_name": o.client_name,
                 "total_amount": float(o.total_amount),
                 "status": o.status,

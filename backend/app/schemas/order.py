@@ -1,17 +1,22 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from decimal import Decimal
 from datetime import datetime
 from app.models.order import OrderStatus, PaymentMethod
 
 
 class OrderItemCreate(BaseModel):
-    product_id: int
+    product_id: int | str
     quantity: int
+
+    @field_validator("product_id", mode="before")
+    @classmethod
+    def coerce_product(cls, v):
+        return int(v) if v is not None else None
 
 
 class OrderItemResponse(BaseModel):
-    id: int
-    product_id: int | None
+    id: str
+    product_id: str | None
     product_name: str
     price: Decimal
     quantity: int
@@ -19,9 +24,14 @@ class OrderItemResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+    @field_validator("id", "product_id", mode="before")
+    @classmethod
+    def to_str(cls, v):
+        return str(v) if v is not None else None
+
 
 class OrderCreate(BaseModel):
-    client_id: int | None = None
+    client_id: int | str | None = None
     client_phone: str | None = None
     client_name: str | None = None
     client_store: str | None = None
@@ -30,6 +40,11 @@ class OrderCreate(BaseModel):
     items: list[OrderItemCreate]
     source: str = "direct"
     catalog_slug: str | None = None
+
+    @field_validator("client_id", mode="before")
+    @classmethod
+    def coerce_client(cls, v):
+        return int(v) if v is not None else None
 
 
 class OrderStatusUpdate(BaseModel):
@@ -41,8 +56,8 @@ class OrderPaymentUpdate(BaseModel):
 
 
 class OrderResponse(BaseModel):
-    id: int
-    client_id: int | None
+    id: str
+    client_id: str | None
     client_phone: str | None
     client_name: str | None
     client_store: str | None
@@ -57,10 +72,15 @@ class OrderResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+    @field_validator("id", "client_id", mode="before")
+    @classmethod
+    def to_str(cls, v):
+        return str(v) if v is not None else None
+
 
 class OrderListResponse(BaseModel):
-    id: int
-    client_id: int | None
+    id: str
+    client_id: str | None
     client_name: str | None
     client_phone: str | None
     status: OrderStatus
@@ -69,3 +89,8 @@ class OrderListResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @field_validator("id", "client_id", mode="before")
+    @classmethod
+    def to_str(cls, v):
+        return str(v) if v is not None else None

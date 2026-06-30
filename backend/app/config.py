@@ -17,11 +17,13 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
 
-    # Backblaze B2
+    # Object Storage (Cloudflare R2 or Backblaze B2)
     B2_KEY_ID: str = ""
     B2_APP_KEY: str = ""
     B2_BUCKET_NAME: str = "hozmir-photos"
     B2_ENDPOINT_URL: str = "https://s3.us-west-004.backblazeb2.com"
+    # Public URL for R2: https://pub-xxxx.r2.dev  (без слэша в конце)
+    STORAGE_PUBLIC_URL: str = ""
 
     # Telegram
     TELEGRAM_BOT_TOKEN: str = ""

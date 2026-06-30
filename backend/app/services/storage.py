@@ -2,10 +2,9 @@ import boto3
 from botocore.config import Config
 from app.config import settings
 import uuid
-from io import BytesIO
 
 
-def get_b2_client():
+def get_s3_client():
     return boto3.client(
         "s3",
         endpoint_url=settings.B2_ENDPOINT_URL,
@@ -16,8 +15,8 @@ def get_b2_client():
 
 
 async def upload_image(image_bytes: bytes, content_type: str = "image/webp") -> dict:
-    """Upload image to Backblaze B2, return {url, key}."""
-    client = get_b2_client()
+    """Upload image to R2/B2, return {url, key}."""
+    client = get_s3_client()
     key = f"products/{uuid.uuid4()}.webp"
     client.put_object(
         Bucket=settings.B2_BUCKET_NAME,
@@ -25,10 +24,11 @@ async def upload_image(image_bytes: bytes, content_type: str = "image/webp") -> 
         Body=image_bytes,
         ContentType=content_type,
     )
-    url = f"{settings.B2_ENDPOINT_URL}/{settings.B2_BUCKET_NAME}/{key}"
+    base = settings.STORAGE_PUBLIC_URL or f"{settings.B2_ENDPOINT_URL}/{settings.B2_BUCKET_NAME}"
+    url = f"{base}/{key}"
     return {"url": url, "key": key}
 
 
 async def delete_image(key: str) -> None:
-    client = get_b2_client()
+    client = get_s3_client()
     client.delete_object(Bucket=settings.B2_BUCKET_NAME, Key=key)
