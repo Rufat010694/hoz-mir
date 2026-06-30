@@ -97,7 +97,7 @@ export default function CatalogPage() {
             className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
           >
             {p.photos[0] ? (
-              <img src={p.photos[0].thumbnail_url} alt={p.name} className="w-full h-36 object-cover" />
+              <img src={p.photos[0].thumbnail_url} alt={p.name} className="w-full h-36 object-cover" loading="lazy" />
             ) : (
               <div className="w-full h-36 bg-gray-100 flex items-center justify-center">
                 <ImageIcon size={32} className="text-gray-300" />

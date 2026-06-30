@@ -47,12 +47,12 @@ export default function ProductPage() {
       {/* Photos */}
       {product.photos.length > 0 ? (
         <div>
-          <img src={product.photos[photoIndex]?.url} alt={product.name} className="w-full h-72 object-contain bg-gray-50" />
+          <img src={product.photos[photoIndex]?.url} alt={product.name} className="w-full h-72 object-contain bg-gray-50" loading="lazy" />
           {product.photos.length > 1 && (
             <div className="flex gap-2 p-3 overflow-x-auto">
               {product.photos.map((ph, i) => (
                 <button key={i} onClick={() => setPhotoIndex(i)}>
-                  <img src={ph.thumbnail_url} alt="" className={`w-14 h-14 rounded-lg object-cover border-2 ${i === photoIndex ? "border-primary-500" : "border-transparent"}`} />
+                  <img src={ph.thumbnail_url} alt="" className={`w-14 h-14 rounded-lg object-cover border-2 ${i === photoIndex ? "border-primary-500" : "border-transparent"}`} loading="lazy" />
                 </button>
               ))}
             </div>

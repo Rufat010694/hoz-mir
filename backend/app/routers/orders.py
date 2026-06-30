@@ -140,6 +140,9 @@ async def update_order_status(
     await db.commit()
     await db.refresh(order)
     await publish_event(current_user.id, "order_status_changed", {"order_id": order.id, "status": data.status})
+    # Уведомляем клиента о смене статуса его заказа
+    from app.websocket.catalog_manager import publish_order_event
+    await publish_order_event(order.id, "status_changed", {"order_id": order.id, "status": data.status})
     return order
 
 

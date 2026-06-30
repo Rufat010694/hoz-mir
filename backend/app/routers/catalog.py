@@ -11,6 +11,7 @@ from app.models.order import Order
 from app.models.client import Client
 from app.schemas.product import ProductResponse, CategoryResponse
 from app.schemas.order import OrderCreate, OrderResponse
+from app.services.cache import cache_get, cache_set, TTL_SHORT, TTL_STORE
 from decimal import Decimal
 
 router = APIRouter(prefix="/catalog", tags=["catalog"])
@@ -18,14 +19,18 @@ router = APIRouter(prefix="/catalog", tags=["catalog"])
 
 @router.get("/{slug}", response_model=dict)
 async def get_store_info(slug: str, db: AsyncSession = Depends(get_db)):
+    cache_key = f"catalog:{slug}:store"
+    cached = await cache_get(cache_key)
+    if cached:
+        return cached
+
     result = await db.execute(select(User).where(User.catalog_slug == slug, User.is_active == True))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(404, "Store not found")
-    return {
-        "store_name": user.store_name or user.username,
-        "slug": slug,
-    }
+    data = {"store_name": user.store_name or user.username, "slug": slug}
+    await cache_set(cache_key, data, TTL_STORE)
+    return data
 
 
 @router.get("/{slug}/products", response_model=list[ProductResponse])
@@ -35,6 +40,13 @@ async def get_catalog_products(
     search: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
+    # Кэшируем только без поиска (поисковые запросы уникальны)
+    cache_key = f"catalog:{slug}:products:{category_id or 'all'}" if not search else None
+    if cache_key:
+        cached = await cache_get(cache_key)
+        if cached:
+            return cached
+
     ur = await db.execute(select(User).where(User.catalog_slug == slug, User.is_active == True))
     user = ur.scalar_one_or_none()
     if not user:
@@ -47,11 +59,22 @@ async def get_catalog_products(
         q = q.where(Product.name.ilike(f"%{search}%"))
     q = q.order_by(Product.name)
     result = await db.execute(q)
-    return result.scalars().all()
+    products = result.scalars().all()
+
+    if cache_key:
+        from app.schemas.product import ProductResponse as PR
+        await cache_set(cache_key, [PR.model_validate(p).model_dump() for p in products], TTL_SHORT)
+
+    return products
 
 
 @router.get("/{slug}/categories", response_model=list[CategoryResponse])
 async def get_catalog_categories(slug: str, db: AsyncSession = Depends(get_db)):
+    cache_key = f"catalog:{slug}:categories"
+    cached = await cache_get(cache_key)
+    if cached:
+        return cached
+
     ur = await db.execute(select(User).where(User.catalog_slug == slug, User.is_active == True))
     user = ur.scalar_one_or_none()
     if not user:
@@ -60,7 +83,11 @@ async def get_catalog_categories(slug: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Category).where(Category.user_id == user.id).order_by(Category.sort_order)
     )
-    return result.scalars().all()
+    categories = result.scalars().all()
+
+    from app.schemas.product import CategoryResponse as CR
+    await cache_set(cache_key, [CR.model_validate(c).model_dump() for c in categories], TTL_STORE)
+    return categories
 
 
 @router.post("/{slug}/orders", response_model=dict, status_code=201)

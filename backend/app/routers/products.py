@@ -10,10 +10,17 @@ from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse, B
 from app.services.deps import get_current_user
 from app.services.image import process_image, make_thumbnail
 from app.services.storage import upload_image, delete_image
+from app.services.cache import cache_invalidate_store
 from decimal import Decimal
 import openpyxl
 from io import BytesIO
 from fastapi.responses import StreamingResponse
+
+
+async def _invalidate(user: User):
+    """Сбрасываем кэш каталога после изменения товара/категории."""
+    if user.catalog_slug:
+        await cache_invalidate_store(user.catalog_slug)
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -41,6 +48,7 @@ async def create_category(
     db.add(cat)
     await db.commit()
     await db.refresh(cat)
+    await _invalidate(current_user)
     return cat
 
 
@@ -58,6 +66,7 @@ async def delete_category(
         raise HTTPException(404, "Category not found")
     await db.delete(cat)
     await db.commit()
+    await _invalidate(current_user)
 
 
 # ── Products ──────────────────────────────────────────────────────────────────
@@ -94,6 +103,7 @@ async def create_product(
     db.add(product)
     await db.commit()
     await db.refresh(product)
+    await _invalidate(current_user)
     return product
 
 
@@ -129,10 +139,19 @@ async def update_product(
     if "price" in update_data and update_data["price"] != product.price:
         ph = PriceHistory(product_id=product.id, old_price=product.price, new_price=update_data["price"])
         db.add(ph)
+    price_changed = "price" in update_data
     for k, v in update_data.items():
         setattr(product, k, v)
     await db.commit()
     await db.refresh(product)
+    await _invalidate(current_user)
+    # Уведомляем клиентов каталога об изменении цены
+    if price_changed and current_user.catalog_slug:
+        from app.websocket.catalog_manager import publish_catalog_event
+        await publish_catalog_event(current_user.catalog_slug, "price_updated", {
+            "product_id": product.id,
+            "price": float(product.price),
+        })
     return product
 
 
@@ -150,6 +169,7 @@ async def delete_product(
         raise HTTPException(404, "Product not found")
     await db.delete(product)
     await db.commit()
+    await _invalidate(current_user)
 
 
 # ── Photo upload ──────────────────────────────────────────────────────────────

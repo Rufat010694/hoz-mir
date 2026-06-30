@@ -107,7 +107,7 @@ export default function ProductForm({ product, categories, onClose, onSaved }: P
               <div className="flex gap-2 flex-wrap mb-2">
                 {product.photos.map((ph, i) => (
                   <div key={i} className="relative">
-                    <img src={ph.thumbnail_url} alt="" className="w-16 h-16 rounded-lg object-cover" />
+                    <img src={ph.thumbnail_url} alt="" className="w-16 h-16 rounded-lg object-cover" loading="lazy" />
                     <button
                       type="button"
                       onClick={() => productsApi.deletePhoto(product.id, i).then(onSaved)}

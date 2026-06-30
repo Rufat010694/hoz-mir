@@ -33,7 +33,7 @@ export default function CartPage() {
             {items.map((item) => (
               <div key={item.product.id} className="bg-white rounded-xl border border-gray-100 p-3 flex gap-3">
                 {item.product.photos[0] ? (
-                  <img src={item.product.photos[0].thumbnail_url} alt={item.product.name} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
+                  <img src={item.product.photos[0].thumbnail_url} alt={item.product.name} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
                 ) : (
                   <div className="w-16 h-16 rounded-lg bg-gray-100 flex-shrink-0" />
                 )}

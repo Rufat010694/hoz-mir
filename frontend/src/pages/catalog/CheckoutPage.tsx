@@ -1,13 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import catalogApi from "@/api/catalog";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice } from "@/utils/format";
 import { formatPhoneInput, phoneError } from "@/utils/phone";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Clock, Package, Truck } from "lucide-react";
 import { Input } from "@/components/common/Input";
 import { Button } from "@/components/common/Button";
+
+const STATUS_INFO: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+  new:        { label: "Принят",       icon: <CheckCircle size={40} />, color: "text-blue-500" },
+  processing: { label: "В обработке",  icon: <Clock size={40} />,       color: "text-yellow-500" },
+  ready:      { label: "Готов",        icon: <Package size={40} />,     color: "text-primary-500" },
+  delivered:  { label: "Выдан",        icon: <Truck size={40} />,       color: "text-green-600" },
+  cancelled:  { label: "Отменён",      icon: <CheckCircle size={40} />, color: "text-red-500" },
+};
 
 export default function CheckoutPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -21,6 +29,22 @@ export default function CheckoutPage() {
   const [comment, setComment] = useState("");
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState<number | null>(null);
+  const [orderStatus, setOrderStatus] = useState("new");
+  const wsRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    if (!orderId) return;
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${proto}://${window.location.host}/api/ws/order/${orderId}`);
+    wsRef.current = ws;
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.event === "status_changed") setOrderStatus(msg.data.status);
+      } catch {}
+    };
+    return () => ws.close();
+  }, [orderId]);
 
   const phoneErr = phoneTouched ? phoneError(phone) : null;
   const canSubmit = !phoneError(phone) && items.length > 0;
@@ -42,12 +66,24 @@ export default function CheckoutPage() {
     },
   });
 
-  if (success) {
+  if (success && orderId) {
+    const info = STATUS_INFO[orderStatus] || STATUS_INFO.new;
+    const steps = ["new", "processing", "ready", "delivered"];
+    const currentStep = steps.indexOf(orderStatus);
     return (
       <div className="max-w-2xl mx-auto flex flex-col items-center justify-center min-h-screen p-4 text-center">
-        <CheckCircle size={64} className="text-primary-500 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Заказ #{orderId} принят!</h2>
-        <p className="text-gray-500 mb-6">Продавец свяжется с вами для подтверждения заказа.</p>
+        <div className={`mb-4 ${info.color}`}>{info.icon}</div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-1">Заказ #{orderId}</h2>
+        <div className={`text-lg font-semibold mb-2 ${info.color}`}>{info.label}</div>
+        <p className="text-gray-400 text-sm mb-8">Статус обновляется автоматически</p>
+        <div className="flex items-center gap-1 mb-8">
+          {steps.map((s, i) => (
+            <div key={s} className="flex items-center gap-1">
+              <div className={`w-3 h-3 rounded-full transition-all ${currentStep >= i ? "bg-primary-500" : "bg-gray-200"}`} />
+              {i < steps.length - 1 && <div className={`h-0.5 w-8 transition-all ${currentStep > i ? "bg-primary-500" : "bg-gray-200"}`} />}
+            </div>
+          ))}
+        </div>
         <Button onClick={() => navigate(`/catalog/${slug}`)}>Вернуться в каталог</Button>
       </div>
     );
