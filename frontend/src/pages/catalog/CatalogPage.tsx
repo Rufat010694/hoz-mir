@@ -37,11 +37,16 @@ export default function CatalogPage() {
       {/* Header */}
       <div className="sticky top-0 bg-white border-b border-gray-100 z-30 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Хоз Мир" className="h-20 object-contain" />
-            <h1 className="text-lg font-bold text-gray-800">{store?.store_name || "Каталог"}</h1>
+          {/* Logo centered, stretched a bit */}
+          <div className="flex-1 flex justify-center">
+            <img
+              src="/logo.png"
+              alt="Хоз Мир"
+              className="h-16 object-contain"
+              style={{ transform: "scaleX(1.12)", transformOrigin: "center" }}
+            />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Link
               to={`/catalog/${slug}/track`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-xs font-semibold transition-colors"
