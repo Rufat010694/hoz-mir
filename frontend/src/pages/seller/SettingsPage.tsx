@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
 import { Button } from "@/components/common/Button";
+import { Input } from "@/components/common/Input";
 import { Copy, ExternalLink, QrCode, Share2 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -40,15 +43,27 @@ const SHARE_OPTIONS = [
 ];
 
 export default function SettingsPage() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, loadUser } = useAuthStore();
   const navigate = useNavigate();
   const [showQr, setShowQr] = useState(false);
+  const [iin, setIin] = useState((user as any)?.iin ?? "");
+  const [fullName, setFullName] = useState(user?.full_name ?? "");
+  const [storeName, setStoreName] = useState(user?.store_name ?? "");
+
+  const profileMutation = useMutation({
+    mutationFn: () => axios.patch("/api/auth/me", { iin, full_name: fullName, store_name: storeName }),
+    onSuccess: async () => { await loadUser(); toast.success("Профиль обновлён"); },
+    onError: () => toast.error("Ошибка сохранения"),
+  });
+
+  const storageGB = ((user as any)?.storage_used ?? 0) / (1024 ** 3);
+  const storagePercent = Math.min(100, (storageGB / 5) * 100);
 
   const catalogUrl = user?.catalog_slug
     ? `${window.location.origin}/catalog/${user.catalog_slug}`
     : null;
 
-  const storeName = user?.store_name || "Каталог";
+  const storeDisplayName = storeName || user?.store_name || "Каталог";
 
   const copyLink = () => {
     if (catalogUrl) {
@@ -60,7 +75,7 @@ export default function SettingsPage() {
   const nativeShare = async () => {
     if (navigator.share && catalogUrl) {
       try {
-        await navigator.share({ title: storeName, text: "Каталог товаров", url: catalogUrl });
+        await navigator.share({ title: storeDisplayName, text: "Каталог товаров", url: catalogUrl });
       } catch {}
     }
   };
@@ -77,11 +92,29 @@ export default function SettingsPage() {
         {/* Profile */}
         <div className="bg-white rounded-xl border border-gray-100 p-4">
           <h3 className="font-semibold text-gray-700 mb-3">Профиль</h3>
-          <div className="space-y-2 text-sm text-gray-600">
-            <p><span className="font-medium">Логин:</span> {user?.username}</p>
-            <p><span className="font-medium">Имя:</span> {user?.full_name || "—"}</p>
-            <p><span className="font-medium">Магазин:</span> {user?.store_name || "—"}</p>
-            <p><span className="font-medium">Роль:</span> {user?.role === "admin" ? "Администратор" : "Продавец"}</p>
+          <div className="space-y-3">
+            <p className="text-sm text-gray-500">Логин: <span className="font-medium text-gray-800">{user?.username}</span></p>
+            <Input label="ФИО / Название ИП" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Иванов Иван Иванович" />
+            <Input label="Название магазина" value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Мой магазин" />
+            <Input label="ИИН / БИН (для накладной)" value={iin} onChange={(e) => setIin(e.target.value)} placeholder="000000000000" />
+            <Button size="sm" loading={profileMutation.isPending} onClick={() => profileMutation.mutate()}>
+              Сохранить
+            </Button>
+          </div>
+        </div>
+
+        {/* Storage */}
+        <div className="bg-white rounded-xl border border-gray-100 p-4">
+          <h3 className="font-semibold text-gray-700 mb-2">Хранилище фото</h3>
+          <div className="flex justify-between text-sm text-gray-600 mb-1">
+            <span>{storageGB.toFixed(2)} ГБ использовано</span>
+            <span>5 ГБ</span>
+          </div>
+          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${storagePercent > 80 ? "bg-red-500" : "bg-primary-500"}`}
+              style={{ width: `${storagePercent}%` }}
+            />
           </div>
         </div>
 
@@ -113,7 +146,7 @@ export default function SettingsPage() {
                 <button
                   key={opt.label}
                   onClick={() => {
-                    const url = opt.getUrl(catalogUrl, storeName);
+                    const url = opt.getUrl(catalogUrl, storeDisplayName);
                     if (url) window.open(url, "_blank");
                   }}
                   className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-opacity ${opt.color}`}

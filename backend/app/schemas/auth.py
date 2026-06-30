@@ -26,6 +26,12 @@ class UserCreate(BaseModel):
     store_name: str | None = None
 
 
+class UserProfileUpdate(BaseModel):
+    full_name: str | None = None
+    store_name: str | None = None
+    iin: str | None = None
+
+
 class UserResponse(BaseModel):
     id: str
     username: str
@@ -35,6 +41,8 @@ class UserResponse(BaseModel):
     store_name: str | None
     catalog_slug: str | None
     is_active: bool
+    iin: str | None = None
+    storage_used: int = 0
 
     model_config = {"from_attributes": True}
 

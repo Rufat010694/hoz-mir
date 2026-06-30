@@ -1,4 +1,4 @@
-from sqlalchemy import String, Boolean, Enum as SAEnum
+from sqlalchemy import String, Boolean, Enum as SAEnum, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 import enum
@@ -25,6 +25,8 @@ class User(Base):
     store_name: Mapped[str] = mapped_column(String(255), nullable=True)
     catalog_slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=True, index=True)
     telegram_chat_id: Mapped[str] = mapped_column(String(50), nullable=True)
+    iin: Mapped[str] = mapped_column(String(20), nullable=True)          # ИИН/БИН для накладной
+    storage_used: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

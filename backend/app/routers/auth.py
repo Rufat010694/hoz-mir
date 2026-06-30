@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app.models.user import User
-from app.schemas.auth import LoginRequest, TokenResponse, RefreshRequest, UserCreate, UserResponse
+from app.schemas.auth import LoginRequest, TokenResponse, RefreshRequest, UserCreate, UserResponse, UserProfileUpdate
+from app.services.deps import get_current_user
 from app.utils.security import verify_password, hash_password, create_access_token, create_refresh_token, decode_token
 import secrets
 import string
@@ -49,6 +50,24 @@ async def refresh(data: RefreshRequest, db: AsyncSession = Depends(get_db)):
     access = create_access_token({"sub": str(user.id), "role": user.role})
     refresh_new = create_refresh_token({"sub": str(user.id)})
     return TokenResponse(access_token=access, refresh_token=refresh_new)
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_profile(
+    data: UserProfileUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(current_user, field, value)
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
 
 
 @router.post("/register", response_model=UserResponse, status_code=201)

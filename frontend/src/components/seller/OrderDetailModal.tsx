@@ -4,6 +4,7 @@ import { formatPrice, formatDate, PAYMENT_LABELS } from "@/utils/format";
 import { StatusBadge } from "@/components/common/Badge";
 import { Button } from "@/components/common/Button";
 import { OrderStatus, PaymentMethod } from "@/types";
+import { useAuthStore } from "@/store/authStore";
 import toast from "react-hot-toast";
 import { X, Printer } from "lucide-react";
 
@@ -26,6 +27,7 @@ const STATUS_NEXT_LABEL: Record<OrderStatus, string | null> = {
 interface Props { orderId: number; onClose: () => void; onUpdated: () => void; }
 
 export default function OrderDetailModal({ orderId, onClose, onUpdated }: Props) {
+  const { user } = useAuthStore();
   const { data: order, isLoading } = useQuery({ queryKey: ["order", orderId], queryFn: () => ordersApi.get(orderId) });
 
   const statusMutation = useMutation({
@@ -49,37 +51,108 @@ export default function OrderDetailModal({ orderId, onClose, onUpdated }: Props)
 
   const printInvoice = () => {
     if (!order) return;
-    const storeName = (window as any).__STORE_NAME__ || "Магазин";
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Счёт #${order.order_number ?? order.id}</title>
+    const seller = user?.store_name || user?.full_name || user?.username || "—";
+    const sellerIIN = (user as any)?.iin || "_______________";
+    const docNum = order.order_number ?? order.id;
+    const docDate = new Date(order.created_at).toLocaleDateString("ru-KZ");
+    const buyer = [order.client_name, order.client_store].filter(Boolean).join(", ") || "—";
+    const buyerPhone = order.client_phone || "—";
+    const rows = order.items.map((item, i) => `
+      <tr>
+        <td style="border:1px solid #000;padding:4px;text-align:center">${i + 1}</td>
+        <td style="border:1px solid #000;padding:4px">${item.product_name}</td>
+        <td style="border:1px solid #000;padding:4px;text-align:center"></td>
+        <td style="border:1px solid #000;padding:4px;text-align:center">шт</td>
+        <td style="border:1px solid #000;padding:4px;text-align:center">${item.quantity}</td>
+        <td style="border:1px solid #000;padding:4px;text-align:center">${item.quantity}</td>
+        <td style="border:1px solid #000;padding:4px;text-align:right">${item.price.toFixed(2)}</td>
+        <td style="border:1px solid #000;padding:4px;text-align:right">${item.subtotal.toFixed(2)}</td>
+      </tr>`).join("");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Накладная №${docNum}</title>
 <style>
-  body{font-family:Arial,sans-serif;padding:24px;color:#111;font-size:14px}
-  h1{font-size:20px;margin-bottom:4px}
-  .meta{color:#555;font-size:12px;margin-bottom:20px}
-  table{width:100%;border-collapse:collapse;margin-bottom:16px}
-  th{text-align:left;border-bottom:2px solid #111;padding:6px 4px;font-size:12px}
-  td{padding:6px 4px;border-bottom:1px solid #eee}
-  .total{font-weight:bold;font-size:16px;text-align:right}
-  .footer{margin-top:24px;font-size:11px;color:#888}
-  @media print{body{padding:0}}
+  body{font-family:Arial,sans-serif;font-size:11px;color:#000;margin:10mm 15mm}
+  h2{font-size:14px;font-weight:bold;text-align:center;margin:8px 0}
+  .ref{font-size:9px;text-align:right;margin-bottom:4px}
+  .header-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+  .org-box{border:1px solid #000;padding:6px;min-height:60px}
+  .org-label{font-size:9px;margin-bottom:4px}
+  .meta-row{display:flex;gap:16px;margin-bottom:6px;align-items:flex-end}
+  .meta-field{border-bottom:1px solid #000;min-width:80px;display:inline-block}
+  table{width:100%;border-collapse:collapse;margin-top:6px}
+  th{border:1px solid #000;padding:4px;text-align:center;font-size:10px;background:#f5f5f5}
+  .sig{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px}
+  .sig-line{border-top:1px solid #000;margin-top:20px;font-size:9px;text-align:center}
+  @media print{@page{margin:10mm 15mm}body{margin:0}}
 </style></head><body>
-<h1>Счёт-фактура #${order.order_number ?? order.id}</h1>
-<div class="meta">
-  Дата: ${new Date(order.created_at).toLocaleString("ru")}<br/>
-  Клиент: ${order.client_name || "—"} | Тел: ${order.client_phone || "—"}${order.client_store ? ` | Магазин: ${order.client_store}` : ""}<br/>
-  Оплата: ${PAYMENT_LABELS[order.payment_method as keyof typeof PAYMENT_LABELS] ?? order.payment_method}
+<div class="ref">к приказу Министерства финансов Республики Казахстан от 20 декабря 2012 года №562 &nbsp;|&nbsp; Форма 3-2</div>
+<div class="header-grid">
+  <div>
+    <div class="org-box">
+      <div class="org-label">Организация (индивидуальный предприниматель) — отправитель:</div>
+      <strong>${seller}</strong><br/>
+      ИИН/БИН: <span class="meta-field">${sellerIIN}</span>
+    </div>
+  </div>
+  <div>
+    <div style="text-align:center">
+      <h2>НАКЛАДНАЯ НА ОТПУСК ЗАПАСОВ НА СТОРОНУ</h2>
+      <div class="meta-row" style="justify-content:center;gap:24px">
+        <span>БИН/ИИН: <span class="meta-field" style="min-width:120px">${sellerIIN}</span></span>
+      </div>
+      <div class="meta-row" style="justify-content:center;gap:24px">
+        <span>Номер <span class="meta-field" style="min-width:60px">${docNum}</span></span>
+        <span>Дата <span class="meta-field" style="min-width:80px">${docDate}</span></span>
+      </div>
+    </div>
+    <div class="org-box" style="margin-top:4px">
+      <div class="org-label">Организация (индивидуальный предприниматель) — получатель:</div>
+      <strong>${buyer}</strong><br/>
+      Тел: ${buyerPhone}
+    </div>
+  </div>
 </div>
+<div style="font-size:9px;margin-bottom:4px">Товарно-транспортная организация: <span class="meta-field" style="min-width:200px"></span></div>
 <table>
-  <thead><tr><th>Товар</th><th>Цена</th><th>Кол-во</th><th style="text-align:right">Сумма</th></tr></thead>
+  <thead>
+    <tr>
+      <th rowspan="2" style="width:30px">№</th>
+      <th rowspan="2">Наименование, характеристика</th>
+      <th rowspan="2" style="width:30px">№</th>
+      <th rowspan="2" style="width:40px">Единица изм.</th>
+      <th colspan="2">Количество</th>
+      <th rowspan="2" style="width:80px">Цена, ₸</th>
+      <th rowspan="2" style="width:90px">Сумма, ₸</th>
+    </tr>
+    <tr>
+      <th style="width:55px">Подлежит отпуску</th>
+      <th style="width:55px">Отпущено</th>
+    </tr>
+  </thead>
   <tbody>
-    ${order.items.map(i => `<tr><td>${i.product_name}</td><td>${formatPrice(i.price)}</td><td>${i.quantity}</td><td style="text-align:right">${formatPrice(i.subtotal)}</td></tr>`).join("")}
+    ${rows}
   </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="7" style="border:1px solid #000;padding:4px;text-align:right;font-weight:bold">ИТОГО:</td>
+      <td style="border:1px solid #000;padding:4px;text-align:right;font-weight:bold">${order.total_amount.toFixed(2)}</td>
+    </tr>
+  </tfoot>
 </table>
-<div class="total">Итого: ${formatPrice(order.total_amount)}</div>
-${order.comment ? `<p style="color:#555;font-size:12px;margin-top:12px">Комментарий: ${order.comment}</p>` : ""}
-<div class="footer">Документ сформирован автоматически · ${storeName}</div>
+<div class="sig">
+  <div>
+    <p>Ответственный за поставку (Ф.И.О.):</p>
+    <div class="sig-line">${seller}</div>
+  </div>
+  <div>
+    <p>Груз принял (Ф.И.О.):</p>
+    <div class="sig-line">${buyer}</div>
+  </div>
+</div>
+${order.comment ? `<p style="font-size:10px;margin-top:8px">Примечание: ${order.comment}</p>` : ""}
 </body></html>`;
-    const w = window.open("", "_blank", "width=700,height=600");
-    if (w) { w.document.write(html); w.document.close(); w.focus(); w.print(); }
+    const w = window.open("", "_blank", "width=900,height=700");
+    if (w) { w.document.write(html); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 400); }
   };
 
   if (isLoading || !order) return null;
@@ -94,10 +167,13 @@ ${order.comment ? `<p style="color:#555;font-size:12px;margin-top:12px">Комм
             <StatusBadge status={order.status} />
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={printInvoice} title="Распечатать счёт" className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg">
-              <Printer size={18} />
+            <button
+              onClick={printInvoice}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-primary-50 hover:text-primary-700 text-gray-600 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Printer size={15} /> Накладная
             </button>
-            <button onClick={onClose}><X size={20} className="text-gray-400" /></button>
+            <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600"><X size={20} /></button>
           </div>
         </div>
 

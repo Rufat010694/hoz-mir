@@ -128,7 +128,6 @@ export default function CheckoutPage() {
           {[
             { value: "cash", label: "Наличные" },
             { value: "transfer", label: "Перевод" },
-            { value: "debt", label: "В долг" },
           ].map((opt) => (
             <label key={opt.value} className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
               <input type="radio" name="payment" value={opt.value} checked={payment === opt.value} onChange={() => setPayment(opt.value)} className="accent-primary-600" />

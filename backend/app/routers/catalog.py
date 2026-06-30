@@ -113,6 +113,7 @@ async def track_order(slug: str, order_number: int, phone: str = Query(...), db:
     items = items_res.scalars().all()
 
     return {
+        "order_id": str(order.id),
         "order_number": order.order_number,
         "status": order.status,
         "total_amount": float(order.total_amount),

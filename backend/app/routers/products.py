@@ -211,14 +211,26 @@ async def upload_product_photo(
         raise HTTPException(404, "Product not found")
 
     raw = await file.read()
+
+    STORAGE_LIMIT = 5 * 1024 * 1024 * 1024  # 5 GB
+    if (current_user.storage_used or 0) + len(raw) > STORAGE_LIMIT:
+        raise HTTPException(413, "Превышен лимит хранилища 5 ГБ. Удалите старые фото.")
+
     webp = process_image(raw)
     thumb = make_thumbnail(raw)
 
     main_info = await upload_image(webp, "image/webp")
     thumb_info = await upload_image(thumb, "image/webp")
 
+    upload_size = len(webp) + len(thumb)
+    current_user.storage_used = (current_user.storage_used or 0) + upload_size
+
     photos = list(product.photos or [])
-    photos.append({"url": main_info["url"], "thumbnail_url": thumb_info["url"], "key": main_info["key"], "thumb_key": thumb_info["key"]})
+    photos.append({
+        "url": main_info["url"], "thumbnail_url": thumb_info["url"],
+        "key": main_info["key"], "thumb_key": thumb_info["key"],
+        "size": upload_size,
+    })
     product.photos = photos
     await db.commit()
     await db.refresh(product)
@@ -242,11 +254,13 @@ async def delete_product_photo(
     if photo_index >= len(photos):
         raise HTTPException(400, "Invalid photo index")
     photo = photos.pop(photo_index)
+    freed = photo.get("size", 0)
     try:
         await delete_image(photo["key"])
         await delete_image(photo["thumb_key"])
     except Exception:
         pass
+    current_user.storage_used = max(0, (current_user.storage_used or 0) - freed)
     product.photos = photos
     await db.commit()
     await db.refresh(product)
