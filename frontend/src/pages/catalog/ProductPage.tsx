@@ -20,7 +20,7 @@ export default function ProductPage() {
     enabled: !!slug,
   });
 
-  const product = products.find((p) => p.id === parseInt(productId!));
+  const product = products.find((p) => String(p.id) === String(productId));
 
   const handleAdd = () => {
     if (product) { addItem(product, quantity); navigate(`/catalog/${slug}/cart`); }
